@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.haohaoli.UserMapper">
+
+    <resultMap id="BaseResultMap" type="cn.haohaoli.User">
+      <id property="id" column="id" />
+      <result property="age" column="age"/>
+      <result property="name" column="name"/>
+      <collection
+        property="orderList"
+        ofType="cn.haohaoli.Order"
+        select="cn.haohaoli.OrderMapper.getByUserId"
+        column="id" fetchType="lazy" />
+    </resultMap>
+
+    <select id="getById" resultMap="BaseResultMap" parameterType="int">
+        select * from user where id = #{p0}
+    </select>
+
+</mapper>
