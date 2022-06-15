@@ -44,6 +44,10 @@ public class ResultMapping {
   private List<ResultMapping> composites;
   private String resultSet;
   private String foreignColumn;
+
+  /**
+   * 是否是延迟加载
+   */
   private boolean lazy;
 
   ResultMapping() {

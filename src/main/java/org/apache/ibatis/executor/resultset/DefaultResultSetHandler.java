@@ -395,8 +395,11 @@ public class DefaultResultSetHandler implements ResultSetHandler {
 
   private Object getRowValue(ResultSetWrapper rsw, ResultMap resultMap, String columnPrefix) throws SQLException {
     final ResultLoaderMap lazyLoader = new ResultLoaderMap();
+
+    // 创建返回值对象
     Object rowValue = createResultObject(rsw, resultMap, lazyLoader, columnPrefix);
     if (rowValue != null && !hasTypeHandlerForResultObject(rsw, resultMap.getType())) {
+      // 创建MetaObject对象
       final MetaObject metaObject = configuration.newMetaObject(rowValue);
       boolean foundValues = this.useConstructorMappings;
       if (shouldApplyAutomaticMappings(resultMap, false)) {
@@ -501,6 +504,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
 
   private Object getPropertyMappingValue(ResultSet rs, MetaObject metaResultObject, ResultMapping propertyMapping, ResultLoaderMap lazyLoader, String columnPrefix)
       throws SQLException {
+    // 判断是否存在嵌套查询
     if (propertyMapping.getNestedQueryId() != null) {
       return getNestedQueryMappingValue(rs, metaResultObject, propertyMapping, lazyLoader, columnPrefix);
     } else if (propertyMapping.getResultSet() != null) {
@@ -633,7 +637,10 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       final List<ResultMapping> propertyMappings = resultMap.getPropertyResultMappings();
       for (ResultMapping propertyMapping : propertyMappings) {
         // issue gcode #109 && issue #149
+        // [延迟加载] 如果存在嵌套查询,并且是延迟加载.那么创建代理对象并返回
         if (propertyMapping.getNestedQueryId() != null && propertyMapping.isLazy()) {
+
+          // [延迟加载] 创建代理对象
           resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
           break;
         }
@@ -776,6 +783,9 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     return value;
   }
 
+  /**
+   * 获取嵌套查询的值
+   */
   private Object getNestedQueryMappingValue(ResultSet rs, MetaObject metaResultObject, ResultMapping propertyMapping, ResultLoaderMap lazyLoader, String columnPrefix)
       throws SQLException {
     final String nestedQueryId = propertyMapping.getNestedQueryId();

@@ -66,7 +66,11 @@ public class ResultLoader {
     this.creatorThreadId = Thread.currentThread().getId();
   }
 
+  /**
+   * 加载延迟结果
+   */
   public Object loadResult() throws SQLException {
+    // 查询结果
     List<Object> list = selectList();
     resultObject = resultExtractor.extractObjectFromList(list, targetType);
     return resultObject;
@@ -74,12 +78,16 @@ public class ResultLoader {
 
   private <E> List<E> selectList() throws SQLException {
     Executor localExecutor = executor;
+    // 判断创建对象的与现在调用的线程是否是同一个或者创建对象时的执行器已经关闭
     if (Thread.currentThread().getId() != this.creatorThreadId || localExecutor.isClosed()) {
+      // 重新创建一个执行器
       localExecutor = newExecutor();
     }
     try {
+      // 调用执行器查询结果
       return localExecutor.query(mappedStatement, parameterObject, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER, cacheKey, boundSql);
     } finally {
+      // 如果是新创建的执行器则需要手动关闭
       if (localExecutor != executor) {
         localExecutor.close(false);
       }

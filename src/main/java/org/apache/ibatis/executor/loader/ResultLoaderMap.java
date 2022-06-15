@@ -75,9 +75,18 @@ public class ResultLoaderMap {
     return loaderMap.containsKey(property.toUpperCase(Locale.ENGLISH));
   }
 
+  /**
+   * 加载延迟属性
+   *
+   * @param property
+   * @return
+   * @throws SQLException
+   */
   public boolean load(String property) throws SQLException {
+    // 根据属性名取出延迟加载对象
     LoadPair pair = loaderMap.remove(property.toUpperCase(Locale.ENGLISH));
     if (pair != null) {
+      // 调用加载逻辑
       pair.load();
       return true;
     }
@@ -180,7 +189,7 @@ public class ResultLoaderMap {
       if (this.resultLoader == null) {
         throw new IllegalArgumentException("resultLoader is null");
       }
-
+      // 调用重载方法
       this.load(null);
     }
 
@@ -193,6 +202,7 @@ public class ResultLoaderMap {
         }
 
         final Configuration config = this.getConfiguration();
+        // 获取到延迟属性的
         final MappedStatement ms = config.getMappedStatement(this.mappedStatement);
         if (ms == null) {
           throw new ExecutorException("Cannot lazy load property [" + this.property
@@ -216,6 +226,7 @@ public class ResultLoaderMap {
                 old.parameterObject, old.targetType, old.cacheKey, old.boundSql);
       }
 
+      // 给属性赋值
       this.metaResultObject.setValue(property, this.resultLoader.loadResult());
     }
 
