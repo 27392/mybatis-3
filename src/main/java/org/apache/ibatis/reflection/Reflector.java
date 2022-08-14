@@ -47,6 +47,12 @@ import org.apache.ibatis.util.MapUtil;
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
  *
+ * 这个类代表了一组缓存的类定义信息，它允许在属性名和getter/setter方法之间进行简单的映射。
+ *
+ * 反射器
+ *
+ * 该类中保存了类的(字段,get/set方法)
+ *
  * @author Clinton Begin
  */
 public class Reflector {

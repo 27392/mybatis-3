@@ -10,10 +10,10 @@
       <result property="age" column="age"/>
       <result property="name" column="name"/>
       <collection
-        property="orderList"
-        ofType="cn.haohaoli.Order"
-        select="cn.haohaoli.OrderMapper.getByUserId"
-        column="id" fetchType="lazy" />
+          property="orderList"
+          ofType="cn.haohaoli.Order"
+          select="cn.haohaoli.OrderMapper.getByUserId"
+          column="id" fetchType="lazy" />
     </resultMap>
 
     <select id="getById" resultMap="BaseResultMap" parameterType="int">

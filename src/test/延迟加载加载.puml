@@ -1,0 +1,127 @@
+@startuml
+
+title 延迟加载调用流程
+autonumber
+
+
+actor "用户" as User
+entity "User" as domain
+participant "EnhancedResultObjectProxyImpl" as EnhancedResultObjectProxyImpl
+participant "ResultLoaderMap" as ResultLoaderMap
+participant "Map<String, LoadPair>" as map
+participant "LoadPair" as LoadPair
+participant "ResultLoader" as ResultLoader
+participant "Executor" as Executor
+participant "ResultExtractor" as ResultExtractor
+participant "MetaObject" as MetaObject
+participant "Method" as Method
+
+activate User
+User -> domain: getOrderList
+
+activate domain
+domain -> EnhancedResultObjectProxyImpl: invoke
+
+activate EnhancedResultObjectProxyImpl
+
+group 判断是否还有延迟加载对象 并且不是finalize方法
+group if (是否设置任意方法调用加载)
+EnhancedResultObjectProxyImpl -> ResultLoaderMap: loadAll
+activate EnhancedResultObjectProxyImpl
+activate ResultLoaderMap
+loop 循环调用
+    ResultLoaderMap -> ResultLoaderMap: load
+end
+
+ResultLoaderMap --> EnhancedResultObjectProxyImpl: 返回
+deactivate ResultLoaderMap
+deactivate EnhancedResultObjectProxyImpl
+end
+group else if (是setter方法)
+autonumber 3
+
+EnhancedResultObjectProxyImpl -> ResultLoaderMap: remove
+activate EnhancedResultObjectProxyImpl
+
+ResultLoaderMap --> EnhancedResultObjectProxyImpl: 返回
+deactivate EnhancedResultObjectProxyImpl
+end
+group else if (是getter方法)
+autonumber 3
+EnhancedResultObjectProxyImpl -> ResultLoaderMap: hasLoader
+activate EnhancedResultObjectProxyImpl
+activate ResultLoaderMap
+
+ResultLoaderMap --> EnhancedResultObjectProxyImpl: 是否存在
+
+deactivate ResultLoaderMap
+
+EnhancedResultObjectProxyImpl -> ResultLoaderMap: load(String property)
+
+activate ResultLoaderMap
+
+ResultLoaderMap-> map : remove()
+activate map
+note over of map
+    remove方法会返回被删除的对象
+    保证了属性不会多次加载
+end note
+map --> ResultLoaderMap: 返回LoadPair对象
+deactivate map
+ResultLoaderMap -> LoadPair:load
+
+activate LoadPair #FFBBBB
+LoadPair -> LoadPair: load(Object userObject)
+activate LoadPair #DarkSalmon
+LoadPair -> ResultLoader: loadResult
+
+activate ResultLoader #FFBBBB
+ResultLoader -> ResultLoader: selectList
+activate ResultLoader #DarkSalmon
+
+ResultLoader -> Executor: query
+
+activate Executor
+Executor --> ResultLoader: 返回结果
+deactivate Executor
+deactivate ResultLoader
+
+ResultLoader -> ResultExtractor: extractObjectFromList(处理结果)
+
+activate ResultExtractor
+ResultExtractor -->  ResultLoader: 返回结果
+deactivate ResultExtractor
+
+ResultLoader --> LoadPair: 返回结果
+deactivate LoadPair
+deactivate ResultLoader
+
+LoadPair -> MetaObject: setValue(将查询到的结果赋值到属性中)
+
+activate MetaObject
+MetaObject--> LoadPair: 返回
+deactivate MetaObject
+
+LoadPair--> ResultLoaderMap: 返回
+deactivate LoadPair
+
+ResultLoaderMap --> EnhancedResultObjectProxyImpl: 返回
+deactivate ResultLoaderMap
+end
+end
+
+
+EnhancedResultObjectProxyImpl -> Method: invoke(调用原始方法)
+Method --> EnhancedResultObjectProxyImpl : 返回
+deactivate EnhancedResultObjectProxyImpl
+
+EnhancedResultObjectProxyImpl --> domain: 返回
+deactivate EnhancedResultObjectProxyImpl
+
+domain --> User: 返回
+
+deactivate domain
+
+deactivate User
+
+@enduml

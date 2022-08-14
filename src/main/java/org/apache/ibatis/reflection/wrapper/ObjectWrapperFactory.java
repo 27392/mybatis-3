@@ -22,8 +22,21 @@ import org.apache.ibatis.reflection.MetaObject;
  */
 public interface ObjectWrapperFactory {
 
+  /**
+   * 是否包装
+   *
+   * @param object
+   * @return
+   */
   boolean hasWrapperFor(Object object);
 
+  /**
+   * 获取包装对象
+   *
+   * @param metaObject
+   * @param object
+   * @return
+   */
   ObjectWrapper getWrapperFor(MetaObject metaObject, Object object);
 
 }

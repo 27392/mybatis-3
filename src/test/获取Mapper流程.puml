@@ -1,0 +1,52 @@
+@startuml
+
+title 获取Mapper流程
+autonumber
+
+actor "用户" as User
+participant "DefaultSqlSession" as SqlSession
+participant "Configuration" as Configuration
+participant "MapperRegistry" as MapperRegistry
+participant "MapperRegistry.knownMappers" as knownMappers
+participant "MapperProxyFactory" as MapperProxyFactory
+participant "MapperProxy" as MapperProxy
+
+activate User
+
+User -> SqlSession: DefaultSqlSession.getMapper(UserMapper.class)
+activate SqlSession
+SqlSession -> Configuration: getMapper(UserMapper.class, this)
+activate Configuration
+Configuration -> MapperRegistry: getMapper(UserMapper.class, SqlSession)
+
+activate MapperRegistry
+MapperRegistry -> knownMappers: get(UserMapper.class)
+activate knownMappers
+knownMappers --> MapperRegistry: MapperProxyFactory<UserMapper>
+deactivate knownMappers
+
+MapperRegistry -> MapperProxyFactory: newInstance(sqlSession)
+activate MapperProxyFactory
+MapperProxyFactory -> MapperProxy: <<create>>
+activate MapperProxy
+MapperProxy--> MapperProxyFactory: MapperProxy对象
+deactivate MapperProxy
+MapperProxyFactory-> MapperProxy: newInstance
+activate MapperProxy
+MapperProxy--> MapperProxyFactory: UserMapperProxy
+deactivate MapperProxy
+MapperProxyFactory--> MapperRegistry: UserMapperProxy
+deactivate MapperProxyFactory
+MapperRegistry--> Configuration: UserMapperProxy
+deactivate MapperRegistry
+Configuration--> SqlSession: UserMapperProxy
+deactivate Configuration
+
+SqlSession--> User: UserMapperProxy
+deactivate SqlSession
+
+
+
+deactivate User
+
+@enduml

@@ -1,0 +1,56 @@
+@startuml
+
+title 创建Session流程
+autonumber
+
+actor "用户" as User
+participant "DefaultSqlSessionFactory" as SqlSessionFactory
+participant "Configuration" as Configuration
+participant "TransactionFactory" as TransactionFactory
+participant "SimpleExecutor" as Executor
+participant "DefaultSqlSession" as SqlSession
+
+
+activate User
+User -> SqlSessionFactory: openSession
+
+activate SqlSessionFactory
+SqlSessionFactory -> SqlSessionFactory:openSessionFromDataSource(SIMPLE,null,false)
+
+activate SqlSessionFactory
+SqlSessionFactory -> Configuration: getEnvironment 获取当前环境
+activate Configuration
+Configuration --> SqlSessionFactory: Environment 对象
+deactivate Configuration
+SqlSessionFactory -> SqlSessionFactory: getTransactionFactoryFromEnvironment(environment) 获取事务工厂从环境信息中
+activate SqlSessionFactory
+SqlSessionFactory -> TransactionFactory: <<create>>
+activate TransactionFactory
+
+TransactionFactory --> SqlSessionFactory: TransactionFactory对象
+deactivate TransactionFactory
+deactivate SqlSessionFactory
+
+SqlSessionFactory -> TransactionFactory:newTransaction(environment.getDataSource(), null, false) 创建事务对象
+activate TransactionFactory
+TransactionFactory --> SqlSessionFactory:Transaction
+deactivate TransactionFactory
+
+SqlSessionFactory -> Configuration: newExecutor(Transaction, SIMPLE) 创建执行器(事务对象,执行器类型)
+activate Configuration
+Configuration -> Executor: new SimpleExecutor(this, transaction)
+activate Executor
+Executor --> Configuration:SimpleExecutor对象
+deactivate Executor
+Configuration --> SqlSessionFactory: SimpleExecutor对象
+deactivate Configuration
+
+SqlSessionFactory -> SqlSession: new DefaultSqlSession(configuration, SimpleExecutor, false)[配置信息,执行器,是否自动提交]
+SqlSession --> SqlSessionFactory: DefaultSqlSession对象
+deactivate SqlSessionFactory
+
+SqlSessionFactory --> User: DefaultSqlSession对象
+deactivate SqlSessionFactory
+
+deactivate User
+@enduml

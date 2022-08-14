@@ -42,10 +42,14 @@ public class BeanWrapper extends BaseWrapper {
 
   @Override
   public Object get(PropertyTokenizer prop) {
+    // 判断是否存在索引
     if (prop.getIndex() != null) {
+      // 获取解析后的集合或者map
       Object collection = resolveCollection(prop, object);
+      // 根据下标获取属性值
       return getCollectionValue(prop, collection);
     } else {
+      // 不存在索引,直接获取值
       return getBeanProperty(prop, object);
     }
   }
@@ -146,10 +150,14 @@ public class BeanWrapper extends BaseWrapper {
   @Override
   public MetaObject instantiatePropertyValue(String name, PropertyTokenizer prop, ObjectFactory objectFactory) {
     MetaObject metaValue;
+    // 获取属性的setter类型
     Class<?> type = getSetterType(prop.getName());
     try {
+      // 创建属性对象
       Object newObject = objectFactory.create(type);
+      // 使用属性对象创建 MetaObject
       metaValue = MetaObject.forObject(newObject, metaObject.getObjectFactory(), metaObject.getObjectWrapperFactory(), metaObject.getReflectorFactory());
+      // 并将属性设置到对象上
       set(prop, newObject);
     } catch (Exception e) {
       throw new ReflectionException("Cannot set value of property '" + name + "' because '" + name + "' is null and cannot be instantiated on instance of " + type.getName() + ". Cause:" + e.toString(), e);
@@ -159,8 +167,10 @@ public class BeanWrapper extends BaseWrapper {
 
   private Object getBeanProperty(PropertyTokenizer prop, Object object) {
     try {
+      // 根据属性名获取对应的getter调用者
       Invoker method = metaClass.getGetInvoker(prop.getName());
       try {
+        // 调用invoke获取值
         return method.invoke(object, NO_ARGUMENTS);
       } catch (Throwable t) {
         throw ExceptionUtil.unwrapThrowable(t);

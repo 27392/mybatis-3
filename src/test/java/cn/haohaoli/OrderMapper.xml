@@ -5,6 +5,11 @@
 
 <mapper namespace="cn.haohaoli.OrderMapper">
 
+<resultMap id="Base_Map" type="cn.haohaoli.Order">
+      <id column="id" property="id"/>
+      <result column="user_id" property="userId"/>
+    </resultMap>
+
     <select id="getByUserId" resultType="cn.haohaoli.Order">
         select * from `order` where user_id = #{id}
     </select>

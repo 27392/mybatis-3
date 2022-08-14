@@ -1,0 +1,96 @@
+@startuml
+
+title 查询流程
+autonumber
+
+actor "用户" as User
+participant "UserMapper" as UserMapper
+participant "DefaultSqlSession" as SqlSession
+participant "SimpleExecutor" as Executor
+participant "Configuration" as Configuration
+participant "MappedStatement" as MappedStatement
+participant "StatementHandler" as StatementHandler
+participant "ParameterHandler" as ParameterHandler
+participant "ResultSetHandler" as ResultSetHandler
+participant "PreparedStatement" as Statement
+
+activate User
+
+User -> UserMapper: MapperProxy.getById`
+
+UserMapper -> SqlSession: selectList
+
+activate SqlSession
+SqlSession-> SqlSession:selectList
+activate SqlSession
+SqlSession-> SqlSession:selectList
+activate SqlSession
+SqlSession-> Configuration: getMappedStatement
+Configuration -> SqlSession: MappedStatement
+SqlSession -> Executor:query
+deactivate SqlSession
+deactivate SqlSession
+
+
+activate Executor #FFBB11
+Executor-> MappedStatement: getBoundSql
+activate MappedStatement
+MappedStatement--> Executor: BoundSql对象
+deactivate MappedStatement
+
+Executor-> Executor:query
+activate Executor #FFBBEE
+Executor-> Executor:queryFromDatabase
+activate Executor #1FBBBB
+Executor-> Executor:doQuery
+activate Executor #AFBBBB
+Executor -> Configuration: getConfiguration
+activate Configuration
+Configuration--> Executor: Configuration对象
+deactivate Configuration
+
+
+Executor -> Configuration: newStatementHandler
+activate Configuration
+Configuration-> StatementHandler:<<create>>
+StatementHandler--> Configuration: StatementHandler对象
+Configuration--> Executor: StatementHandler对象
+deactivate Configuration
+
+Executor-> Executor:prepareStatement(StatementHandler)
+activate Executor #FBBBBB
+Executor-> Executor: getConnection
+
+Executor-> StatementHandler: prepare
+activate StatementHandler
+StatementHandler-> StatementHandler: instantiateStatement
+activate StatementHandler
+StatementHandler-> Connection: prepareStatement
+Connection--> StatementHandler: Statement对象
+deactivate StatementHandler
+StatementHandler-->Executor: Statement对象
+deactivate StatementHandler
+
+Executor->StatementHandler:parameterize
+StatementHandler-> ParameterHandler: setParameters
+Executor-->Executor: Statement对象
+deactivate Executor
+
+Executor->StatementHandler:query
+StatementHandler-> Statement:execute
+StatementHandler-> ResultSetHandler:handleResultSets
+
+ResultSetHandler--> Executor: 结果
+Executor --> Executor:1
+
+
+deactivate Executor
+deactivate Executor
+
+
+deactivate SqlSession
+
+
+deactivate User
+
+@enduml
