@@ -18,6 +18,8 @@ package org.apache.ibatis.logging;
 import java.lang.reflect.Constructor;
 
 /**
+ * 日志工厂
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
@@ -28,9 +30,14 @@ public final class LogFactory {
    */
   public static final String MARKER = "MYBATIS";
 
+  /**
+   * 三方 log 适配器的构造方法
+   */
   private static Constructor<? extends Log> logConstructor;
 
   static {
+    // 按顺序加载三方日志组件,
+    // 使用首个能加载的类(如果同时存在 Slf4j 与 CommonsLogging ,按照顺序使用 Slf4j )
     tryImplementation(LogFactory::useSlf4jLogging);
     tryImplementation(LogFactory::useCommonsLogging);
     tryImplementation(LogFactory::useLog4J2Logging);
@@ -43,10 +50,22 @@ public final class LogFactory {
     // disable construction
   }
 
+  /**
+   * 根据 class 获取 log对象
+   *
+   * @param clazz
+   * @return
+   */
   public static Log getLog(Class<?> clazz) {
     return getLog(clazz.getName());
   }
 
+  /**
+   * 根据名称获取 log对象
+   *
+   * @param logger
+   * @return
+   */
   public static Log getLog(String logger) {
     try {
       return logConstructor.newInstance(logger);
@@ -55,19 +74,32 @@ public final class LogFactory {
     }
   }
 
+  /**
+   * 手动设置日志实现类
+   *
+   * @param clazz
+   */
   public static synchronized void useCustomLogging(Class<? extends Log> clazz) {
     setImplementation(clazz);
   }
 
+  /**
+   * 使用 slf4j
+   */
   public static synchronized void useSlf4jLogging() {
     setImplementation(org.apache.ibatis.logging.slf4j.Slf4jImpl.class);
   }
 
+  /**
+   * 使用 commons logging
+   */
   public static synchronized void useCommonsLogging() {
     setImplementation(org.apache.ibatis.logging.commons.JakartaCommonsLoggingImpl.class);
   }
 
   /**
+   * 使用 log4j(过期)
+   *
    * @deprecated Since 3.5.9 - See https://github.com/mybatis/mybatis-3/issues/1223. This method will remove future.
    */
   @Deprecated
@@ -75,25 +107,44 @@ public final class LogFactory {
     setImplementation(org.apache.ibatis.logging.log4j.Log4jImpl.class);
   }
 
+  /**
+   * 使用 log4j2
+   */
   public static synchronized void useLog4J2Logging() {
     setImplementation(org.apache.ibatis.logging.log4j2.Log4j2Impl.class);
   }
 
+  /**
+   * 使用 jdk logging
+   */
   public static synchronized void useJdkLogging() {
     setImplementation(org.apache.ibatis.logging.jdk14.Jdk14LoggingImpl.class);
   }
 
+  /**
+   * 使用 标准输出
+   */
   public static synchronized void useStdOutLogging() {
     setImplementation(org.apache.ibatis.logging.stdout.StdOutImpl.class);
   }
 
+  /**
+   * 使用空 logging
+   */
   public static synchronized void useNoLogging() {
     setImplementation(org.apache.ibatis.logging.nologging.NoLoggingImpl.class);
   }
 
+  /**
+   * 尝试加载日志实现
+   *
+   * @param runnable
+   */
   private static void tryImplementation(Runnable runnable) {
+    // 当前日志实现类不存在
     if (logConstructor == null) {
       try {
+        // 调用加载方法尝试加载
         runnable.run();
       } catch (Throwable t) {
         // ignore
@@ -103,11 +154,14 @@ public final class LogFactory {
 
   private static void setImplementation(Class<? extends Log> implClass) {
     try {
+      // 获取类的 String 类型构造方法
       Constructor<? extends Log> candidate = implClass.getConstructor(String.class);
+      // 创建对象
       Log log = candidate.newInstance(LogFactory.class.getName());
       if (log.isDebugEnabled()) {
         log.debug("Logging initialized using '" + implClass + "' adapter.");
       }
+      // 初始化 日志实现类
       logConstructor = candidate;
     } catch (Throwable t) {
       throw new LogException("Error setting Log implementation.  Cause: " + t, t);
