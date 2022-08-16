@@ -55,10 +55,10 @@ public abstract class BaseJdbcLogger {
   // 保存了以 PreparedStatement.set 开头方法的第两个参数的值
   private final List<Object> columnValues = new ArrayList<>();
 
-  // log对象
+  // log 对象
   protected final Log statementLog;
 
-  //
+  // 记录的SQL的层数,用来格式化输出SQL
   protected final int queryStack;
 
   /*
@@ -187,15 +187,26 @@ public abstract class BaseJdbcLogger {
     }
   }
 
+  /**
+   * 日志前缀 '==> '或 '<== '
+   *
+   * @param isInput 是否是输入
+   * @return
+   */
   private String prefix(boolean isInput) {
+    // 根据SQL层级初始化
     char[] buffer = new char[queryStack * 2 + 2];
+    // 使用 '=' 填充 buffer 数组
     Arrays.fill(buffer, '=');
+    // 将倒数第一个赋值为空值 ' '
     buffer[queryStack * 2 + 1] = ' ';
+    // 如果是输入将倒数第二个赋值为 '>', 否则将第一个赋值为 '<'
     if (isInput) {
       buffer[queryStack * 2] = '>';
     } else {
       buffer[0] = '<';
     }
+    // 将数组转换成S tring 并返回
     return new String(buffer);
   }
 
