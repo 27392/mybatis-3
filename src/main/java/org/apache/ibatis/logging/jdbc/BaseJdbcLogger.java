@@ -46,16 +46,16 @@ public abstract class BaseJdbcLogger {
   // 保存了 Statement 接口执行SQL语句相关的方法
   protected static final Set<String> EXECUTE_METHODS = new HashSet<>();
 
-  // 保存了以 PreparedStatement.set 开头方法的两个参数的值
+  // 保存了 PreparedStatement 类 set 开头方法的两个参数的值
   private final Map<Object, Object> columnMap = new HashMap<>();
 
-  // 保存了以 PreparedStatement.set 开头方法的第一个参数的值
+  // 保存了 PreparedStatement 类 set 开头方法的第一个参数的值
   private final List<Object> columnNames = new ArrayList<>();
 
-  // 保存了以 PreparedStatement.set 开头方法的第两个参数的值
+  // 保存了 PreparedStatement 类 set 开头方法的第两个参数的值
   private final List<Object> columnValues = new ArrayList<>();
 
-  // log 对象
+  // 当前所执行的 Mapper log 对象
   protected final Log statementLog;
 
   // 记录的SQL的层数,用来格式化输出SQL
@@ -163,24 +163,52 @@ public abstract class BaseJdbcLogger {
     columnValues.clear();
   }
 
+  /**
+   * 去除多余空格
+   *
+   * @param original
+   * @return
+   */
   protected String removeExtraWhitespace(String original) {
     return SqlSourceBuilder.removeExtraWhitespaces(original);
   }
 
+  /**
+   * isDebugEnabled 的简单封装
+   *
+   * @return
+   */
   protected boolean isDebugEnabled() {
     return statementLog.isDebugEnabled();
   }
 
+  /**
+   * isTraceEnabled 的简单封装
+   *
+   * @return
+   */
   protected boolean isTraceEnabled() {
     return statementLog.isTraceEnabled();
   }
 
+  /**
+   * 输出 debug 级别日志, 同时格式化日志内容
+   *
+   * @param text  文本
+   * @param input 是否是输入
+   */
   protected void debug(String text, boolean input) {
     if (statementLog.isDebugEnabled()) {
       statementLog.debug(prefix(input) + text);
     }
   }
 
+  /**
+   * 输出 trace 级别日志, 同时格式化日志内容
+   *
+   * @param text  文本
+   * @param input 是否是输入
+   */
   protected void trace(String text, boolean input) {
     if (statementLog.isTraceEnabled()) {
       statementLog.trace(prefix(input) + text);

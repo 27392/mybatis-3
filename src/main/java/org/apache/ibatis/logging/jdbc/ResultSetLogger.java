@@ -50,8 +50,10 @@ public final class ResultSetLogger extends BaseJdbcLogger implements InvocationH
   // 目标对象
   private final ResultSet rs;
 
+  // 超大长度类型下标
   private final Set<Integer> blobColumns = new HashSet<>();
 
+  // 初始化超大长度类型
   static {
     BLOB_TYPES.add(Types.BINARY);
     BLOB_TYPES.add(Types.BLOB);
