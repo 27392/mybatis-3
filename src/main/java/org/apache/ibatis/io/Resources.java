@@ -32,9 +32,11 @@ import java.util.Properties;
  */
 public class Resources {
 
+  // classLoaderWrapper 对象
   private static ClassLoaderWrapper classLoaderWrapper = new ClassLoaderWrapper();
 
   /**
+   * 字符集
    * Charset to use when calling getResourceAsReader.
    * null means use the system default.
    */
@@ -44,6 +46,8 @@ public class Resources {
   }
 
   /**
+   * 获取应用指定的默认类加载器
+   *
    * Returns the default classloader (may be null).
    *
    * @return The default classloader
@@ -53,6 +57,8 @@ public class Resources {
   }
 
   /**
+   * 设置应用指定的默认类加载器
+   *
    * Sets the default classloader
    *
    * @param defaultClassLoader - the new default ClassLoader
@@ -62,6 +68,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 URL 形式返回
+   *
    * Returns the URL of the resource on the classpath
    *
    * @param resource The resource to find
@@ -74,6 +82,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 URL 形式返回
+   *
    * Returns the URL of the resource on the classpath
    *
    * @param loader   The classloader used to fetch the resource
@@ -90,6 +100,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 InputStream 形式返回
+   *
    * Returns a resource on the classpath as a Stream object
    *
    * @param resource The resource to find
@@ -101,6 +113,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 InputStream 形式返回
+   *
    * Returns a resource on the classpath as a Stream object
    *
    * @param loader   The classloader used to fetch the resource
@@ -117,6 +131,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 Properties 形式返回
+   *
    * Returns a resource on the classpath as a Properties object
    *
    * @param resource The resource to find
@@ -132,6 +148,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 Properties 形式返回
+   *
    * Returns a resource on the classpath as a Properties object
    *
    * @param loader   The classloader used to fetch the resource
@@ -148,6 +166,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 Reader 形式返回
+   *
    * Returns a resource on the classpath as a Reader object
    *
    * @param resource The resource to find
@@ -165,6 +185,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 Reader 形式返回
+   *
    * Returns a resource on the classpath as a Reader object
    *
    * @param loader   The classloader used to fetch the resource
@@ -183,6 +205,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 File 形式返回
+   *
    * Returns a resource on the classpath as a File object
    *
    * @param resource The resource to find
@@ -194,6 +218,8 @@ public class Resources {
   }
 
   /**
+   * 从 classpath 中获取资源,以 File 形式返回
+   *
    * Returns a resource on the classpath as a File object
    *
    * @param loader   - the classloader used to fetch the resource
@@ -206,6 +232,8 @@ public class Resources {
   }
 
   /**
+   * 以 url 形式中获取资源,以 InputStream 形式返回
+   *
    * Gets a URL as an input stream
    *
    * @param urlString - the URL to get
@@ -219,7 +247,7 @@ public class Resources {
   }
 
   /**
-   * Gets a URL as a Reader
+   * 以 url 形式中获取资源,以 Reader 形式返回
    *
    * @param urlString - the URL to get
    * @return A Reader with the data from the URL
@@ -236,6 +264,8 @@ public class Resources {
   }
 
   /**
+   * 以 url 形式中获取资源,以 Properties 形式返回
+   *
    * Gets a URL as a Properties object
    *
    * @param urlString - the URL to get
@@ -251,6 +281,8 @@ public class Resources {
   }
 
   /**
+   * 在一组类加载器中查找 class
+   *
    * Loads a class
    *
    * @param className - the class to fetch
@@ -261,10 +293,20 @@ public class Resources {
     return classLoaderWrapper.classForName(className);
   }
 
+  /**
+   * 获取字符集
+   *
+   * @return
+   */
   public static Charset getCharset() {
     return charset;
   }
 
+  /**
+   * 设置字符集
+   *
+   * @param charset
+   */
   public static void setCharset(Charset charset) {
     Resources.charset = charset;
   }
