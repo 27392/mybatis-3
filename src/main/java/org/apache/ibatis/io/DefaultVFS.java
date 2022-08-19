@@ -48,6 +48,7 @@ public class DefaultVFS extends VFS {
 
   @Override
   public boolean isValid() {
+    // 默认生效
     return true;
   }
 
@@ -57,6 +58,7 @@ public class DefaultVFS extends VFS {
     try {
       List<String> resources = new ArrayList<>();
 
+      // 首先，尝试查找包含所请求资源的JAR文件的URL。如果找到了JAR文件，那么我们将通过读取JAR列出子资源。
       // First, try to find the URL of a JAR file containing the requested resource. If a JAR
       // file is found, then we'll list child resources by reading the JAR.
       URL jarUrl = findJarForResource(url);
@@ -65,6 +67,7 @@ public class DefaultVFS extends VFS {
         if (log.isDebugEnabled()) {
           log.debug("Listing " + url);
         }
+        // 遍历 JAR 文件中的资源
         resources = listResources(new JarInputStream(is), path);
       } else {
         List<String> children = new ArrayList<>();

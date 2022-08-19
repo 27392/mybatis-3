@@ -33,36 +33,47 @@ import org.apache.ibatis.logging.LogFactory;
  * @author Ben Gunter
  */
 public abstract class VFS {
+
+  // 日志对象
   private static final Log log = LogFactory.getLog(VFS.class);
 
+  // 内部对 VFS 的实现类
   /** The built-in implementations. */
   public static final Class<?>[] IMPLEMENTATIONS = { JBoss6VFS.class, DefaultVFS.class };
 
   /**
+   * 用户对 VFS 的实现类,可以使用 addImplClass 方法添加
+   *
    * The list to which implementations are added by {@link #addImplClass(Class)}.
    */
   public static final List<Class<? extends VFS>> USER_IMPLEMENTATIONS = new ArrayList<>();
 
+  // VFS 单例持有者
   /** Singleton instance holder. */
   private static class VFSHolder {
+
+    // 单例对象
     static final VFS INSTANCE = createVFS();
 
+    // 创建单例对象
     @SuppressWarnings("unchecked")
     static VFS createVFS() {
+      // 将用户实现与默认实现添加到同一个集合中(优先加载用户实现)
       // Try the user implementations first, then the built-ins
       List<Class<? extends VFS>> impls = new ArrayList<>();
       impls.addAll(USER_IMPLEMENTATIONS);
       impls.addAll(Arrays.asList((Class<? extends VFS>[]) IMPLEMENTATIONS));
 
+      // 遍历实现类,并判断是否在当前环境下有效( isValid 方法),如果生效则使用该实现类
       // Try each implementation class until a valid one is found
       VFS vfs = null;
       for (int i = 0; vfs == null || !vfs.isValid(); i++) {
         Class<? extends VFS> impl = impls.get(i);
         try {
+          // 创建 vfs 对象
           vfs = impl.getDeclaredConstructor().newInstance();
           if (!vfs.isValid() && log.isDebugEnabled()) {
-            log.debug("VFS implementation " + impl.getName()
-                + " is not valid in this environment.");
+            log.debug("VFS implementation " + impl.getName()+ " is not valid in this environment.");
           }
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
           log.error("Failed to instantiate " + impl, e);
@@ -79,6 +90,8 @@ public abstract class VFS {
   }
 
   /**
+   * 获取 VFS 单例对象
+   *
    * Get the singleton {@link VFS} instance. If no {@link VFS} implementation can be found for the current environment,
    * then this method returns null.
    *
@@ -89,6 +102,8 @@ public abstract class VFS {
   }
 
   /**
+   * 添加 VFS 实现类
+   *
    * Adds the specified class to the list of {@link VFS} implementations. Classes added in this
    * manner are tried in the order they are added and before any of the built-in implementations.
    *
@@ -101,6 +116,8 @@ public abstract class VFS {
   }
 
   /**
+   * 根据名称获取 Class (从当前线程绑定的类加载器中)
+   *
    * Get a class by name. If the class is not found then return null.
    *
    * @param className
@@ -120,6 +137,8 @@ public abstract class VFS {
   }
 
   /**
+   * 根据方法名与参数从指定 Class 获取方法
+   *
    * Get a method by name and parameter types. If the method is not found then return null.
    *
    * @param clazz
@@ -146,6 +165,8 @@ public abstract class VFS {
   }
 
   /**
+   * 执行类型类的方法
+   *
    * Invoke a method on an object and return whatever it returns.
    *
    * @param <T>
@@ -179,6 +200,8 @@ public abstract class VFS {
   }
 
   /**
+   * 从线程绑定的类加载器获取在指定路径找到的所有资源的url列表
+   *
    * Get a list of {@link URL}s from the context classloader for all the resources found at the
    * specified path.
    *
@@ -191,6 +214,8 @@ public abstract class VFS {
   }
 
   /**
+   * VFS 在当前环境中是否生效
+   *
    * Return true if the {@link VFS} implementation is valid for the current environment.
    *
    * @return true, if is valid
@@ -198,6 +223,8 @@ public abstract class VFS {
   public abstract boolean isValid();
 
   /**
+   * 递归列出所有资源的完整资源路径
+   *
    * Recursively list the full resource path of all the resources that are children of the
    * resource identified by a URL.
    *
@@ -210,6 +237,8 @@ public abstract class VFS {
   protected abstract List<String> list(URL url, String forPath) throws IOException;
 
   /**
+   * 递归列出所有资源的完整资源路径，这些资源是在指定路径上找到的所有资源的子资源
+   *
    * Recursively list the full resource path of all the resources that are children of all the
    * resources found at the specified path.
    *
