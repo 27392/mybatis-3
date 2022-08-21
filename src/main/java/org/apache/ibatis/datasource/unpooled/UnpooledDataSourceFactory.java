@@ -78,7 +78,8 @@ public class UnpooledDataSourceFactory implements DataSourceFactory {
   }
 
   /**
-   * 类型装换
+   * 类型转换
+   *
    * @param metaDataSource
    * @param propertyName
    * @param value

@@ -64,7 +64,7 @@ public class PooledDataSource implements DataSource {
   protected boolean poolPingEnabled;
   // 多长时间未使用过连接(超时时间发送测试SQL)
   protected int poolPingConnectionsNotUsedFor;
-
+  // 由数据库 URL、用户名和密码计算出来的 hash 值,可用于标识该连接所在的连接池
   private int expectedConnectionTypeCode;
 
   public PooledDataSource() {
