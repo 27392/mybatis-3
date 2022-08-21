@@ -40,9 +40,13 @@ public class JdbcTransaction implements Transaction {
 
   private static final Log log = LogFactory.getLog(JdbcTransaction.class);
 
+  // 连接对象
   protected Connection connection;
+  // 数据源
   protected DataSource dataSource;
+  // 事务隔离级别
   protected TransactionIsolationLevel level;
+  // 自动提交事务
   protected boolean autoCommit;
 
   public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
@@ -57,28 +61,35 @@ public class JdbcTransaction implements Transaction {
 
   @Override
   public Connection getConnection() throws SQLException {
+    // 如果连接不为空则获取一个连接
     if (connection == null) {
+      // 获取连接
       openConnection();
     }
+    // 返回连接
     return connection;
   }
 
   @Override
   public void commit() throws SQLException {
+    // 连接不为空,并且不是自动提交
     if (connection != null && !connection.getAutoCommit()) {
       if (log.isDebugEnabled()) {
         log.debug("Committing JDBC Connection [" + connection + "]");
       }
+      // 提交事务
       connection.commit();
     }
   }
 
   @Override
   public void rollback() throws SQLException {
+    // 连接不为空,并且不是自动提交
     if (connection != null && !connection.getAutoCommit()) {
       if (log.isDebugEnabled()) {
         log.debug("Rolling back JDBC Connection [" + connection + "]");
       }
+      // 回滚
       connection.rollback();
     }
   }
@@ -86,16 +97,19 @@ public class JdbcTransaction implements Transaction {
   @Override
   public void close() throws SQLException {
     if (connection != null) {
+      // 处理自动提交(有些数据库使用查询语句启动事务，并在关闭连接之前强制提交)
       resetAutoCommit();
       if (log.isDebugEnabled()) {
         log.debug("Closing JDBC Connection [" + connection + "]");
       }
+      // 关闭
       connection.close();
     }
   }
 
   protected void setDesiredAutoCommit(boolean desiredAutoCommit) {
     try {
+      // 当连接的自动提交与参数值不一样时使用参数值
       if (connection.getAutoCommit() != desiredAutoCommit) {
         if (log.isDebugEnabled()) {
           log.debug("Setting autocommit to " + desiredAutoCommit + " on JDBC Connection [" + connection + "]");
@@ -114,6 +128,10 @@ public class JdbcTransaction implements Transaction {
   protected void resetAutoCommit() {
     try {
       if (!connection.getAutoCommit()) {
+        // 如果只是执行了查询，MyBatis不会在连接上调用提交。
+        // 有些数据库使用查询语句启动事务，并在关闭连接之前强制提交。
+        // 一个解决方法是在关闭连接之前将自动提交设置为 true
+
         // MyBatis does not call commit/rollback on a connection if just selects were performed.
         // Some databases start transactions with select statements
         // and they mandate a commit/rollback before closing the connection.
@@ -132,14 +150,22 @@ public class JdbcTransaction implements Transaction {
     }
   }
 
+  /**
+   * 创建数据库连接
+   *
+   * @throws SQLException
+   */
   protected void openConnection() throws SQLException {
     if (log.isDebugEnabled()) {
       log.debug("Opening JDBC Connection");
     }
+    // 从数据中获取连接
     connection = dataSource.getConnection();
+    // 设置事务隔离级别
     if (level != null) {
       connection.setTransactionIsolation(level.getLevel());
     }
+    // 设置自动提交
     setDesiredAutoCommit(autoCommit);
   }
 
