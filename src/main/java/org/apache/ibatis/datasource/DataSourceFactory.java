@@ -24,8 +24,18 @@ import javax.sql.DataSource;
  */
 public interface DataSourceFactory {
 
+  /**
+   * 设置属性
+   *
+   * @param props
+   */
   void setProperties(Properties props);
 
+  /**
+   * 获取 DataSource 对象
+   *
+   * @return
+   */
   DataSource getDataSource();
 
 }

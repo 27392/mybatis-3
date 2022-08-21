@@ -24,21 +24,34 @@ import java.sql.SQLException;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
+ * 当该对象调用 close 方法后生命周期结束.会再次创建一个对象并使用该对象的真实连接达到连接复用
+ *
  * @author Clinton Begin
  */
 class PooledConnection implements InvocationHandler {
 
+  // 关闭方法名称
   private static final String CLOSE = "close";
+  // 动态代理的接口
   private static final Class<?>[] IFACES = new Class<?>[] { Connection.class };
 
+  // 真正的数据库连接的 hashcode
   private final int hashCode;
+  // 数据源
   private final PooledDataSource dataSource;
+  // 真正的数据库连接()
   private final Connection realConnection;
+  // 代理的数据库连接(主要用来代理 close 方法,用于归还连接)
   private final Connection proxyConnection;
+  // 从连接池中取出该连接的时间戳
   private long checkoutTimestamp;
+  // 该连接创建的时间戳
   private long createdTimestamp;
+  // 最后一次被使用的时间戳
   private long lastUsedTimestamp;
+  // 由数据库 URL、用户名和密码计算出来的 hash 值,可用于标识该连接所在的连接池
   private int connectionTypeCode;
+  // 当前连接是否有效
   private boolean valid;
 
   /**
@@ -56,6 +69,7 @@ class PooledConnection implements InvocationHandler {
     this.createdTimestamp = System.currentTimeMillis();
     this.lastUsedTimestamp = System.currentTimeMillis();
     this.valid = true;
+    // 创建代理对象
     this.proxyConnection = (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), IFACES, this);
   }
 
@@ -67,11 +81,13 @@ class PooledConnection implements InvocationHandler {
   }
 
   /**
+   * 判断连接是否可用
    * Method to see if the connection is usable.
    *
    * @return True if the connection is usable
    */
   public boolean isValid() {
+    // 当前对象有效 && 真正的连接不为空 && 测试连接是否可用
     return valid && realConnection != null && dataSource.pingConnection(this);
   }
 
@@ -197,6 +213,7 @@ class PooledConnection implements InvocationHandler {
   }
 
   /**
+   * 获取一次连接从池中取出到关闭的时间
    * Getter for the time that this connection has been checked out.
    *
    * @return the time
@@ -242,14 +259,18 @@ class PooledConnection implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     String methodName = method.getName();
+    // 如果调用 close 方法,则将其重新放入连接池,而不是正则关闭数据库连接
     if (CLOSE.equals(methodName)) {
+      // 重新放入连接池中
       dataSource.pushConnection(this);
       return null;
     }
     try {
+      // 如果不是来自 Object 类的方法则需要检测连接是否还有效
       if (!Object.class.equals(method.getDeclaringClass())) {
         // issue #579 toString() should never fail
         // throw an SQLException instead of a Runtime
+        // 检测连接是否有效
         checkConnection();
       }
       return method.invoke(realConnection, args);
