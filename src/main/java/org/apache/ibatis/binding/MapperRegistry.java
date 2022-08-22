@@ -27,51 +27,88 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * Mapper 注册器
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  * @author Lasse Voss
  */
 public class MapperRegistry {
 
+  // 配置对象
   private final Configuration config;
+  // 已知的Mapper接口 (缓存了 Mapper 接口其代理工厂)
   private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();
 
+  // 构造函数
   public MapperRegistry(Configuration config) {
     this.config = config;
   }
 
+  /**
+   * 获取 Mapper 代理对象
+   *
+   * 不存在则抛出异常
+   *
+   * @param type
+   * @param sqlSession
+   * @param <T>
+   * @return
+   */
   @SuppressWarnings("unchecked")
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
+    // 获取代理工厂
     final MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory<T>) knownMappers.get(type);
+    // 不存在代理工厂则抛出异常
     if (mapperProxyFactory == null) {
       throw new BindingException("Type " + type + " is not known to the MapperRegistry.");
     }
     try {
+      // 使用代理工厂创建代理对象
       return mapperProxyFactory.newInstance(sqlSession);
     } catch (Exception e) {
       throw new BindingException("Error getting mapper instance. Cause: " + e, e);
     }
   }
 
+  /**
+   * 是否包含 Mapper 接口
+   *
+   * @param type
+   * @param <T>
+   * @return
+   */
   public <T> boolean hasMapper(Class<T> type) {
     return knownMappers.containsKey(type);
   }
 
+  /**
+   * 添加 Mapper 接口
+   *
+   * @param type
+   * @param <T>
+   */
   public <T> void addMapper(Class<T> type) {
+    // 类型是否是接口
     if (type.isInterface()) {
+      // 已存在则抛出异常
       if (hasMapper(type)) {
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
+      // 是否缓存完成
       boolean loadCompleted = false;
       try {
+        // 将该 Mapper 接口进行缓存
         knownMappers.put(type, new MapperProxyFactory<>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
         // mapper parser. If the type is already known, it won't try.
+        // 解析 Mapper 接口中的注解
         MapperAnnotationBuilder parser = new MapperAnnotationBuilder(config, type);
         parser.parse();
         loadCompleted = true;
       } finally {
+        // 如果处理失败将其从缓存中删除
         if (!loadCompleted) {
           knownMappers.remove(type);
         }
@@ -80,6 +117,8 @@ public class MapperRegistry {
   }
 
   /**
+   * 获取所有的 Mapper 接口
+   *
    * Gets the mappers.
    *
    * @return the mappers
@@ -90,6 +129,8 @@ public class MapperRegistry {
   }
 
   /**
+   * 添加指定包内指定父类的 Mapper 接口
+   *
    * Adds the mappers.
    *
    * @param packageName
@@ -108,6 +149,8 @@ public class MapperRegistry {
   }
 
   /**
+   * 添加指定包内父类是Object的类
+   *
    * Adds the mappers.
    *
    * @param packageName

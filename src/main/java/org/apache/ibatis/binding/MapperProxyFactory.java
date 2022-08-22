@@ -24,11 +24,15 @@ import org.apache.ibatis.binding.MapperProxy.MapperMethodInvoker;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * Mapper 接口代理工厂
+ *
  * @author Lasse Voss
  */
 public class MapperProxyFactory<T> {
 
+  // Mapper 接口 Class
   private final Class<T> mapperInterface;
+  // Mapper接口的方法 与 方法执行器的关系映射
   private final Map<Method, MapperMethodInvoker> methodCache = new ConcurrentHashMap<>();
 
   public MapperProxyFactory(Class<T> mapperInterface) {
@@ -45,11 +49,14 @@ public class MapperProxyFactory<T> {
 
   @SuppressWarnings("unchecked")
   protected T newInstance(MapperProxy<T> mapperProxy) {
+    // 创建 Mapper 接口的代理对象
     return (T) Proxy.newProxyInstance(mapperInterface.getClassLoader(), new Class[] { mapperInterface }, mapperProxy);
   }
 
   public T newInstance(SqlSession sqlSession) {
+    // 创建 MapperProxy 对象
     final MapperProxy<T> mapperProxy = new MapperProxy<>(sqlSession, mapperInterface, methodCache);
+    // 创建代理对象并返回
     return newInstance(mapperProxy);
   }
 
