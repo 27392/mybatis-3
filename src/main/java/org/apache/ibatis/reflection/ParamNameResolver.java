@@ -95,7 +95,7 @@ public class ParamNameResolver {
       }
       // 如果名称为空
       if (name == null) {
-        // 是否使用实际参数名称
+        // 是否使用实际参数名称 (默认是使用)
         // @Param was not specified.
         if (useActualParamName) {
           // 获取实际参数名称
