@@ -18,10 +18,15 @@ package org.apache.ibatis.cache.decorators;
 import org.apache.ibatis.cache.Cache;
 
 /**
+ * 同步缓存装饰器
+ *
+ * 将所有对缓存的操作都加上 synchronized 关键字
+ *
  * @author Clinton Begin
  */
 public class SynchronizedCache implements Cache {
 
+  // 被装饰的类
   private final Cache delegate;
 
   public SynchronizedCache(Cache delegate) {

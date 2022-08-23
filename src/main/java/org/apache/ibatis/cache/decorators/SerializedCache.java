@@ -30,10 +30,18 @@ import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.io.SerialFilterChecker;
 
 /**
+ * 序列化缓存装饰器(使用的Java的序列化方式)
+ *
+ * 放入时将 value 序列化
+ * 取出时将 value 反序列化
+ *
+ * 这样做的好处是每个线程取出来的缓存值都是全新的对象,对缓存值进行修改不会影响到其他线程中的对象
+ *
  * @author Clinton Begin
  */
 public class SerializedCache implements Cache {
 
+  // 被装饰的类
   private final Cache delegate;
 
   public SerializedCache(Cache delegate) {
@@ -53,6 +61,7 @@ public class SerializedCache implements Cache {
   @Override
   public void putObject(Object key, Object object) {
     if (object == null || object instanceof Serializable) {
+      // 将 value 序列化存储
       delegate.putObject(key, serialize((Serializable) object));
     } else {
       throw new CacheException("SharedCache failed to make a copy of a non-serializable object: " + object);
@@ -62,6 +71,7 @@ public class SerializedCache implements Cache {
   @Override
   public Object getObject(Object key) {
     Object object = delegate.getObject(key);
+    // 将 value 反序列化返回
     return object == null ? null : deserialize((byte[]) object);
   }
 
@@ -85,6 +95,11 @@ public class SerializedCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * 序列化
+   * @param value
+   * @return
+   */
   private byte[] serialize(Serializable value) {
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(bos)) {
@@ -96,6 +111,11 @@ public class SerializedCache implements Cache {
     }
   }
 
+  /**
+   * 反序列化
+   * @param value
+   * @return
+   */
   private Serializable deserialize(byte[] value) {
     SerialFilterChecker.check();
     Serializable result;

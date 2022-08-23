@@ -22,12 +22,18 @@ import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 
 /**
+ * 具体组件实现类
+ *
+ * 使用 hashMap 保存缓存项, 对应的操作缓存的方法都是操作 hashMap
+ *
  * @author Clinton Begin
  */
 public class PerpetualCache implements Cache {
 
+  // id
   private final String id;
 
+  // 使用 hashMap 记录缓存项
   private final Map<Object, Object> cache = new HashMap<>();
 
   public PerpetualCache(String id) {

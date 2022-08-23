@@ -20,13 +20,21 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 
 /**
+ * Log 缓存装饰器
+ *
+ * 主要用来记录请求数与命中数,并输入命中率
+ *
  * @author Clinton Begin
  */
 public class LoggingCache implements Cache {
 
+  // log
   private final Log log;
+  // 被装饰的类
   private final Cache delegate;
+  // 请求数量
   protected int requests = 0;
+  // 命中数量
   protected int hits = 0;
 
   public LoggingCache(Cache delegate) {
@@ -51,8 +59,11 @@ public class LoggingCache implements Cache {
 
   @Override
   public Object getObject(Object key) {
+    // 记录请求数
     requests++;
+    // 获取缓存值
     final Object value = delegate.getObject(key);
+    // 缓存值不为空,记录命中数
     if (value != null) {
       hits++;
     }
@@ -82,6 +93,10 @@ public class LoggingCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * 获取缓存命中率
+   * @return
+   */
   private double getHitRatio() {
     return (double) hits / (double) requests;
   }

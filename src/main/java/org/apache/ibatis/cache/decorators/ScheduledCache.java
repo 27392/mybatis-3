@@ -20,12 +20,19 @@ import java.util.concurrent.TimeUnit;
 import org.apache.ibatis.cache.Cache;
 
 /**
+ * 周期性缓存清理装饰器
+ *
+ * 在固定的时间间隔会将缓存全部清空(调用缓存操作时判断)
+ *
  * @author Clinton Begin
  */
 public class ScheduledCache implements Cache {
 
+  // 被装饰的类
   private final Cache delegate;
+  // 清理时间间隔(默认一个小时)
   protected long clearInterval;
+  // 最后清理时间
   protected long lastClear;
 
   public ScheduledCache(Cache delegate) {
@@ -45,30 +52,36 @@ public class ScheduledCache implements Cache {
 
   @Override
   public int getSize() {
+    // 判断是否到时间,需要清空缓存
     clearWhenStale();
     return delegate.getSize();
   }
 
   @Override
   public void putObject(Object key, Object object) {
+    // 判断是否到时间,需要清空缓存
     clearWhenStale();
     delegate.putObject(key, object);
   }
 
   @Override
   public Object getObject(Object key) {
+    // 判断是否到时间,需要清空缓存
     return clearWhenStale() ? null : delegate.getObject(key);
   }
 
   @Override
   public Object removeObject(Object key) {
+    // 判断是否到时间,需要清空缓存
     clearWhenStale();
     return delegate.removeObject(key);
   }
 
   @Override
   public void clear() {
+    // 清空缓存前记录最后清理时间
     lastClear = System.currentTimeMillis();
+    // 清空缓存
     delegate.clear();
   }
 
@@ -82,8 +95,15 @@ public class ScheduledCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * 判断是否到时间,需要清空缓存
+   *
+   * @return
+   */
   private boolean clearWhenStale() {
+    // (当前时间 - 最后一次清楚时间 > 清理时间间隔) 清空所有的缓存
     if (System.currentTimeMillis() - lastClear > clearInterval) {
+      // 清空所有的缓存
       clear();
       return true;
     }
