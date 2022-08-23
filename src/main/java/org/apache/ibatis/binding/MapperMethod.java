@@ -404,23 +404,23 @@ public class MapperMethod {
 
   public static class MethodSignature {
 
-    // 是否返回多个(Collection子类或是数组)
+    // 返回值类型是否为 Collection类型或是数组类型
     private final boolean returnsMany;
-    // 是否返回 Map
+    // 返回值类型是否为 Map 类型
     private final boolean returnsMap;
-    // 是否返回 void
+    // 返回值类型是否为 void
     private final boolean returnsVoid;
-    // 是否返回游标
+    // 返回值类型是否为 Cursor
     private final boolean returnsCursor;
-    // 是否返回Optional
+    // 返回值类型是否为 Optional
     private final boolean returnsOptional;
-    // 返回类型
+    // 返回值类型
     private final Class<?> returnType;
-    // @MapKey 中的 value
+    // @MapKey注解中的 value
     private final String mapKey;
-    // ResultHandler 在方法参数中的下标
+    // ResultHandler 类型在方法参数中的下标
     private final Integer resultHandlerIndex;
-    // RowBounds 在方法参数中的下标
+    // RowBounds 类型在方法参数中的下标
     private final Integer rowBoundsIndex;
     // 参数名称解析器对象
     private final ParamNameResolver paramNameResolver;
@@ -457,6 +457,12 @@ public class MapperMethod {
       this.paramNameResolver = new ParamNameResolver(configuration, method);
     }
 
+    /**
+     * 将参数(用户请求的参数)转换成SQL语句对应的参数列表
+     *
+     * @param args
+     * @return
+     */
     public Object convertArgsToSqlCommandParam(Object[] args) {
       return paramNameResolver.getNamedParams(args);
     }
