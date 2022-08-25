@@ -21,7 +21,7 @@ import java.util.LinkedList;
 import org.apache.ibatis.cache.Cache;
 
 /**
- * FIFO(先加先出) 缓存装饰器
+ * FIFO(先进先出) 缓存装饰器
  *
  * FIFO (first in, first out) cache decorator.
  *

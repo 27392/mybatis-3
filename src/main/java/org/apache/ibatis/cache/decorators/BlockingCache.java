@@ -25,7 +25,7 @@ import org.apache.ibatis.cache.CacheException;
 /**
  * 阻塞缓存装饰器
  *
- * EhCache的BlockingCache装饰器的简单而低效的版本。当在缓存中找不到元素时，它为缓存键设置锁。
+ * EhCache 的 BlockingCache 装饰器的简单而低效的版本。当在缓存中找不到元素时，它为缓存键设置锁。
  * 这样，其他线程将等待该元素被填充，而不是到达数据库。就其本质而言，如果使用不当，该实现可能会导致死锁
  *
  * <p>Simple blocking decorator

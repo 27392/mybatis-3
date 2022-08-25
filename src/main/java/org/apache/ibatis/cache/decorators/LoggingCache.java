@@ -22,7 +22,7 @@ import org.apache.ibatis.logging.LogFactory;
 /**
  * Log 缓存装饰器
  *
- * 主要用来记录请求数与命中数,并输入命中率
+ * 主要用来记录请求数与命中数,并输出命中率
  *
  * @author Clinton Begin
  */
