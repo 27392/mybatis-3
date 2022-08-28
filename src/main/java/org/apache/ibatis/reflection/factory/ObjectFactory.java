@@ -21,7 +21,7 @@ import java.util.Properties;
 /**
  * MyBatis uses an ObjectFactory to create all needed new Objects.
  *
- * 对象工厂, 主要用來创建对象
+ * 对象工厂, 主要用来创建对象
  *
  * 默认实现类 {@link DefaultObjectFactory}
  *

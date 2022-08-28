@@ -24,6 +24,7 @@ import java.util.List;
  */
 public class InterceptorChain {
 
+  // 多个拦截器
   private final List<Interceptor> interceptors = new ArrayList<>();
 
   public Object pluginAll(Object target) {
@@ -33,10 +34,20 @@ public class InterceptorChain {
     return target;
   }
 
+  /**
+   * 添加拦截器
+   *
+   * @param interceptor
+   */
   public void addInterceptor(Interceptor interceptor) {
     interceptors.add(interceptor);
   }
 
+  /**
+   * 获取多个拦截器
+   *
+   * @return
+   */
   public List<Interceptor> getInterceptors() {
     return Collections.unmodifiableList(interceptors);
   }

@@ -100,6 +100,7 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class Configuration {
 
+  // 环境对象 (包含事务工厂, 数据源)
   protected Environment environment;
 
   protected boolean safeRowBoundsEnabled;
@@ -121,7 +122,9 @@ public class Configuration {
   protected boolean nullableOnForEach;
 
   protected String logPrefix;
+  // 日志实现类
   protected Class<? extends Log> logImpl;
+  // vfs 实现类
   protected Class<? extends VFS> vfsImpl;
   protected Class<?> defaultSqlProviderType;
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
@@ -138,9 +141,13 @@ public class Configuration {
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
+  // 环境变量
   protected Properties variables = new Properties();
+  // 反射器工厂 (主要实现了对 Reflector 对象的创建与缓存)
   protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+  // 对象工厂 (主要用来创建对象)
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
+  // 对象包装工厂 (主要负责创建 ObjectWrapper 对象)
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
   /**
@@ -153,7 +160,9 @@ public class Configuration {
    */
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
+  // 数据库 ID
   protected String databaseId;
+
   /**
    * Configuration factory class.
    * Used to create Configuration for loading deserialized unread properties.
@@ -163,8 +172,11 @@ public class Configuration {
   protected Class<?> configurationFactory;
 
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+  // 拦截器链(包含了多个拦截器信息)
   protected final InterceptorChain interceptorChain = new InterceptorChain();
+  // 类型注册器 (全局唯一)
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry(this);
+  // 别名注册器 (全局唯一)
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
@@ -176,10 +188,12 @@ public class Configuration {
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
+  // 已加载的资源列表 (用来判断是否重复加载)
   protected final Set<String> loadedResources = new HashSet<>();
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
+  // 引用缓存失败的对象集合
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
@@ -189,6 +203,7 @@ public class Configuration {
    * references a cache bound to another namespace and the value is the
    * namespace which the actual cache is bound to.
    */
+  // 缓存引用的关系(key: 使用方,value: 被应用方)
   protected final Map<String, String> cacheRefMap = new HashMap<>();
 
   public Configuration(Environment environment) {
@@ -242,9 +257,17 @@ public class Configuration {
     return logImpl;
   }
 
+  /**
+   * 设置日志实现类
+   *
+   * @param logImpl
+   */
   public void setLogImpl(Class<? extends Log> logImpl) {
+    // 非空判断
     if (logImpl != null) {
+      // 记录自定义日志实现类
       this.logImpl = logImpl;
+      // 设置自定义日志类
       LogFactory.useCustomLogging(this.logImpl);
     }
   }
@@ -253,9 +276,17 @@ public class Configuration {
     return this.vfsImpl;
   }
 
+  /**
+   * 设置 vfs 实现类
+   *
+   * @param vfsImpl
+   */
   public void setVfsImpl(Class<? extends VFS> vfsImpl) {
+    // 非空判断
     if (vfsImpl != null) {
+      // 记录自定义 vfs 实现类
       this.vfsImpl = vfsImpl;
+      // 记录自定义 vfs 实现类
       VFS.addImplClass(this.vfsImpl);
     }
   }
@@ -335,10 +366,20 @@ public class Configuration {
     return nullableOnForEach;
   }
 
+  /**
+   * 获取数据库 id
+   *
+   * @return
+   */
   public String getDatabaseId() {
     return databaseId;
   }
 
+  /**
+   * 设置数据库 id
+   *
+   * @param databaseId
+   */
   public void setDatabaseId(String databaseId) {
     this.databaseId = databaseId;
   }
@@ -375,18 +416,39 @@ public class Configuration {
     this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
   }
 
+  /**
+   * 记录资源到已加载资源列表
+   *
+   * @param resource
+   */
   public void addLoadedResource(String resource) {
     loadedResources.add(resource);
   }
 
+  /**
+   * 是否加载过该资源
+   *
+   * @param resource
+   * @return
+   */
   public boolean isResourceLoaded(String resource) {
     return loadedResources.contains(resource);
   }
 
+  /**
+   * 获取 Environment 对象
+   *
+   * @return
+   */
   public Environment getEnvironment() {
     return environment;
   }
 
+  /**
+   * 设置 Environment 对象
+   *
+   * @param environment
+   */
   public void setEnvironment(Environment environment) {
     this.environment = environment;
   }
@@ -599,26 +661,56 @@ public class Configuration {
     return mapperRegistry;
   }
 
+  /**
+   * 获取 ReflectorFactory 对象
+   *
+   * @return
+   */
   public ReflectorFactory getReflectorFactory() {
     return reflectorFactory;
   }
 
+  /**
+   * 设置 ReflectorFactory 对象
+   *
+   * @param reflectorFactory
+   */
   public void setReflectorFactory(ReflectorFactory reflectorFactory) {
     this.reflectorFactory = reflectorFactory;
   }
 
+  /**
+   * 获取 ObjectFactory 对象
+   *
+   * @return
+   */
   public ObjectFactory getObjectFactory() {
     return objectFactory;
   }
 
+  /**
+   * 设置 ObjectFactory 对象
+   *
+   * @param objectFactory
+   */
   public void setObjectFactory(ObjectFactory objectFactory) {
     this.objectFactory = objectFactory;
   }
 
+  /**
+   * 获取 ObjectWrapperFactory 对象
+   *
+   * @return
+   */
   public ObjectWrapperFactory getObjectWrapperFactory() {
     return objectWrapperFactory;
   }
 
+  /**
+   * 设置 ObjectWrapperFactory 对象
+   *
+   * @param objectWrapperFactory
+   */
   public void setObjectWrapperFactory(ObjectWrapperFactory objectWrapperFactory) {
     this.objectWrapperFactory = objectWrapperFactory;
   }
@@ -740,22 +832,50 @@ public class Configuration {
     return keyGenerators.containsKey(id);
   }
 
+  /**
+   * 添加缓存
+   * Cache 的 id 是 namespace
+   *
+   * @param cache
+   */
   public void addCache(Cache cache) {
     caches.put(cache.getId(), cache);
   }
 
+  /**
+   * 获取所有换成的名称
+   *
+   * @return
+   */
   public Collection<String> getCacheNames() {
     return caches.keySet();
   }
 
+  /**
+   * 获取所有的缓存对象
+   *
+   * @return
+   */
   public Collection<Cache> getCaches() {
     return caches.values();
   }
 
+  /**
+   * 获取具体的缓存对象
+   *
+   * @param id
+   * @return
+   */
   public Cache getCache(String id) {
     return caches.get(id);
   }
 
+  /**
+   * 是否存在缓存对象
+   *
+   * @param id
+   * @return
+   */
   public boolean hasCache(String id) {
     return caches.containsKey(id);
   }
@@ -863,26 +983,60 @@ public class Configuration {
     return sqlFragments;
   }
 
+  /**
+   * 添加插件(拦截器)
+   *
+   * @param interceptor
+   */
   public void addInterceptor(Interceptor interceptor) {
     interceptorChain.addInterceptor(interceptor);
   }
 
+  /**
+   * 添加指定包下指定父类的所有 Mapper 接口
+   *
+   * @param packageName
+   * @param superType
+   */
   public void addMappers(String packageName, Class<?> superType) {
     mapperRegistry.addMappers(packageName, superType);
   }
 
+  /**
+   * 添加指定包下所有的 Mapper 接口
+   *
+   * @param packageName
+   */
   public void addMappers(String packageName) {
     mapperRegistry.addMappers(packageName);
   }
 
+  /**
+   * 添加单个 Mapper 接口
+   * @param type
+   * @param <T>
+   */
   public <T> void addMapper(Class<T> type) {
     mapperRegistry.addMapper(type);
   }
 
+  /**
+   * 获取 Mapper 接口
+   *
+   * @param type
+   * @param sqlSession
+   * @param <T>
+   * @return
+   */
   public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
     return mapperRegistry.getMapper(type, sqlSession);
   }
 
+  /**
+   * 是否存在 Mapper 接口
+   * @param type
+   * @return
+   */
   public boolean hasMapper(Class<?> type) {
     return mapperRegistry.hasMapper(type);
   }
@@ -1005,6 +1159,13 @@ public class Configuration {
     }
   }
 
+  /**
+   * 严格的Map.
+   *
+   * 如果存在重复的key时将抛出异常,获取数据时不存在也会抛出异常
+   *
+   * @param <V>
+   */
   protected static class StrictMap<V> extends HashMap<String, V> {
 
     private static final long serialVersionUID = -4950446264854982944L;
@@ -1047,12 +1208,16 @@ public class Configuration {
     @Override
     @SuppressWarnings("unchecked")
     public V put(String key, V value) {
+      // 包含 key 则抛出异常
       if (containsKey(key)) {
         throw new IllegalArgumentException(name + " already contains value for " + key
             + (conflictMessageProducer == null ? "" : conflictMessageProducer.apply(super.get(key), value)));
       }
+      // key 存在 '.'
       if (key.contains(".")) {
+        // key 按照 '.' 拆分并获取最后一项
         final String shortKey = getShortName(key);
+        // 根据短的 key 再次获取, 不存在则放入.存在则放入 Ambiguity 对象
         if (super.get(shortKey) == null) {
           super.put(shortKey, value);
         } else {
@@ -1065,9 +1230,11 @@ public class Configuration {
     @Override
     public V get(Object key) {
       V value = super.get(key);
+      // 获取数据为空抛出异常
       if (value == null) {
         throw new IllegalArgumentException(name + " does not contain value for " + key);
       }
+      // 如果数据类型为 Ambiguity 也将抛出异常
       if (value instanceof Ambiguity) {
         throw new IllegalArgumentException(((Ambiguity) value).getSubject() + " is ambiguous in " + name
             + " (try using the full name including the namespace, or rename one of the entries)");
@@ -1087,8 +1254,16 @@ public class Configuration {
       }
     }
 
+    /**
+     * 获取短的 key
+     *
+     * @param key
+     * @return
+     */
     private String getShortName(String key) {
+      // 按照 '.' 拆分
       final String[] keyParts = key.split("\\.");
+      // 获取最后一项
       return keyParts[keyParts.length - 1];
     }
   }
