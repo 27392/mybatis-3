@@ -26,16 +26,25 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * @see ResultMap
  * @author Clinton Begin
  */
 public class ResultMapping {
 
+  // Configuration 对象
   private Configuration configuration;
+
+  // 属性名; 对应 property 属性的值
   private String property;
+  // 字段名; 对应 column 属性的值
   private String column;
+  // 属性的 Class; 对应 javaType 属性的值
   private Class<?> javaType;
+  // jdbc类型; 对应 jdbcType 属性的值
   private JdbcType jdbcType;
+  // 类型处理器; 对应 typeHandler 属性的值
   private TypeHandler<?> typeHandler;
+  //
   private String nestedResultMapId;
   private String nestedQueryId;
   private Set<String> notNullColumns;
@@ -44,10 +53,7 @@ public class ResultMapping {
   private List<ResultMapping> composites;
   private String resultSet;
   private String foreignColumn;
-
-  /**
-   * 是否是延迟加载
-   */
+  // 是否是延迟加载
   private boolean lazy;
 
   ResultMapping() {

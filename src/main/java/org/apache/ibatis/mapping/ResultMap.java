@@ -32,13 +32,18 @@ import org.apache.ibatis.reflection.ParamNameUtil;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * @see ResultMapping
  * @author Clinton Begin
  */
 public class ResultMap {
+  // Configuration 对像
   private Configuration configuration;
 
+  // id 属性
   private String id;
+  // type 属性
   private Class<?> type;
+  //
   private List<ResultMapping> resultMappings;
   private List<ResultMapping> idResultMappings;
   private List<ResultMapping> constructorResultMappings;
@@ -48,6 +53,8 @@ public class ResultMap {
   private Discriminator discriminator;
   private boolean hasNestedResultMaps;
   private boolean hasNestedQueries;
+
+  // 是否开启自动映射
   private Boolean autoMapping;
 
   private ResultMap() {

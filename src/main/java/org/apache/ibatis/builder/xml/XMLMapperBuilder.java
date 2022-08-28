@@ -50,14 +50,23 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
+ * XMLMapperBuilder 是 BaseBuilder 的子类
+ *
+ * 主要负责解析 Mapper.xml 映射配置文件
+ *
+ * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html}
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public class XMLMapperBuilder extends BaseBuilder {
 
+  // xpath 对象
   private final XPathParser parser;
+  // MapperBuilderAssistant 对象 (负责映射文件中所有元素对应类的构建;包含 Cache、ResultMap等)
   private final MapperBuilderAssistant builderAssistant;
+  // TODO
   private final Map<String, XNode> sqlFragments;
+  // 文件资源 (url 或 resource 属性的值)
   private final String resource;
 
   @Deprecated
@@ -82,17 +91,32 @@ public class XMLMapperBuilder extends BaseBuilder {
         configuration, resource, sqlFragments);
   }
 
+  /**
+   * 核心的构造函数 (其他的构造函数最终都会调用这个)
+   *
+   * @param parser
+   * @param configuration
+   * @param resource
+   * @param sqlFragments
+   */
   private XMLMapperBuilder(XPathParser parser, Configuration configuration, String resource, Map<String, XNode> sqlFragments) {
     super(configuration);
+    // 创建 MapperBuilderAssistant 对象
     this.builderAssistant = new MapperBuilderAssistant(configuration, resource);
     this.parser = parser;
     this.sqlFragments = sqlFragments;
     this.resource = resource;
   }
 
+  /**
+   * 解析 <mapper> 节点
+   */
   public void parse() {
+    // 判断是否加载过该映射文件
     if (!configuration.isResourceLoaded(resource)) {
+      // 解析 <mapper> 节点
       configurationElement(parser.evalNode("/mapper"));
+      // 将资源保存到 Configuration 中, 以防重复加载
       configuration.addLoadedResource(resource);
       bindMapperForNamespace();
     }
@@ -106,18 +130,69 @@ public class XMLMapperBuilder extends BaseBuilder {
     return sqlFragments.get(refid);
   }
 
+  /**
+   * 解析 <mapper> 节点
+   *
+   * <mapper namespace="org.apache.ibatis.domain.blog.mappers.AuthorMapper">
+   *
+   *    <cache-ref namespace="org.apache.ibatis.submitted.resolution.cachereffromxml.UserMapper" />
+   *
+   *    <cache eviction="FIFO" flushInterval="60000" size="512" readOnly="true"/>
+   *
+   *    <sql id="BaseColumn">
+   *        id,username,password,email,bio
+   *    </sql>
+   *
+   *    <resultMap id="selectAuthor" type="org.apache.ibatis.domain.blog.Author">
+   *        <id column="id" property="id" />
+   *        <result property="username" column="username" />
+   *        <result property="password" column="password" />
+   *        <result property="email" column="email" />
+   *        <result property="bio" column="bio" />
+   *        <result property="favouriteSection" column="favourite_section" />
+   *    </resultMap>
+   *
+   *    <insert id="insertAuthor" parameterType="org.apache.ibatis.domain.blog.Author">
+   *        insert into Author (id,username,password,email,bio) values (#{id},#{username},#{password},#{email},#{bio})
+   *    </insert>
+   *
+   *    <select id="selectAllAuthors" resultType="org.apache.ibatis.domain.blog.Author">
+   *        select * from author
+   *    </select>
+   *
+   *    <update id="updateAuthor" parameterType="org.apache.ibatis.domain.blog.Author">
+   *        update Author set username=#{username, javaType=String}, password=#{password}, email=#{email}, bio=#{bio} where id=#{id}
+   *    </update>
+   *
+   *    <delete id="deleteAuthor" parameterType="int">
+   *       delete from Author where id = #{id}
+   *    </delete>
+   * </mapper>
+   * @param context
+   */
   private void configurationElement(XNode context) {
     try {
+      // 获取 namespace 属性
       String namespace = context.getStringAttribute("namespace");
+      // namespace 属性为空抛出异常
       if (namespace == null || namespace.isEmpty()) {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
+
+      // 记录 namespace 属性到 MapperBuilderAssistant 中
       builderAssistant.setCurrentNamespace(namespace);
+
+      // 解析 <cache-ref> 节点
       cacheRefElement(context.evalNode("cache-ref"));
+      // 解析 <cache> 节点
       cacheElement(context.evalNode("cache"));
+      // 解析 <parameterMap> 节点 .(该节点已经废弃)
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+      // 解析 <resultMap> 节点
       resultMapElements(context.evalNodes("/mapper/resultMap"));
+      // 解析 <sql> 节点
       sqlElement(context.evalNodes("/mapper/sql"));
+      // 解析 <select>、<insert>、<update>、<delete> 等节点
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -187,33 +262,94 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析 <cache-ref> 节点
+   *
+   * <cache-ref namespace="org.apache.ibatis.submitted.resolution.cachereffromxml.UserMapper" />
+   *
+   * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#cache-ref}
+   * @param context
+   */
   private void cacheRefElement(XNode context) {
     if (context != null) {
+      // 获取当前的 namespace 属性与<cache-ref> 中的 namespace 属性.
+      // 将其对应的关系保存到 Configuration 中的 `Map<String, String> cacheRefMap` 属性中, key: 当前 namespace, value: 引用的 namespace
       configuration.addCacheRef(builderAssistant.getCurrentNamespace(), context.getStringAttribute("namespace"));
+
+      // 创建 CacheRefResolver 对象
       CacheRefResolver cacheRefResolver = new CacheRefResolver(builderAssistant, context.getStringAttribute("namespace"));
       try {
+        // 获取关联的缓存, 并将其设置到当前的缓存中
         cacheRefResolver.resolveCacheRef();
       } catch (IncompleteElementException e) {
+        // 被引用的缓存不存在, 将 CacheRefResolver 对象保存到 Configuration 中
         configuration.addIncompleteCacheRef(cacheRefResolver);
       }
     }
   }
 
+  /**
+   * 解析 <cache> 节点
+   *
+   *
+   *  <cache type="org.apache.ibatis.submitted.global_variables.CustomCache">
+   *     <property name="stringValue" value="${stringProperty}"/>
+   *     <property name="integerValue" value="${integerProperty}"/>
+   *     <property name="longValue" value="${longProperty}"/>
+   *  </cache>
+   *
+   *   这个更高级的配置创建了一个 FIFO 缓存，每隔 60 秒刷新，最多可以存储结果对象或列表的 512 个引用，而且返回的对象被认为是只读的，因此对它们进行修改可能会在不同线程中的调用者产生冲突。
+   *   <cache eviction="FIFO" flushInterval="60000" size="512" readOnly="true"/>
+   *
+   * 缓存清除策略有以下几种:
+   *    LRU – 最近最少使用：移除最长时间不被使用的对象。             {@link org.apache.ibatis.cache.decorators.LruCache}
+   *    FIFO – 先进先出：按对象进入缓存的顺序来移除它们。            {@link org.apache.ibatis.cache.decorators.FifoCache}
+   *    SOFT – 软引用：基于垃圾回收器状态和软引用规则移除对象。       {@link org.apache.ibatis.cache.decorators.SoftCache}
+   *    WEAK – 弱引用：更积极地基于垃圾收集器状态和弱引用规则移除对象。{@link org.apache.ibatis.cache.decorators.WeakCache}
+   *
+   * 属性的描述:
+   *  flushInterval（刷新间隔）属性可以被设置为任意的正整数，
+   *    设置的值应该是一个以毫秒为单位的合理时间量。 默认情况是不设置，也就是没有刷新间隔，缓存仅仅会在调用语句时刷新。
+   *  size（引用数目）属性可以被设置为任意正整数，
+   *    要注意欲缓存对象的大小和运行环境中可用的内存资源。默认值是 1024。
+   *  readOnly（只读）属性可以被设置为 true 或 false。
+   *    只读的缓存会给所有调用者返回缓存对象的相同实例。 因此这些对象不能被修改。这就提供了可观的性能提升。而可读写的缓存会（通过序列化）返回缓存对象的拷贝。
+   *    速度上会慢一些，但是更安全，因此默认值是 false。
+   * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E7%BC%93%E5%AD%98}
+   * @param context
+   */
   private void cacheElement(XNode context) {
     if (context != null) {
+      // 获取 type 属性 (缓存类型), 默认值是 PERPETUAL
       String type = context.getStringAttribute("type", "PERPETUAL");
+      // 解析 type 属性的 Class 对象. 通过别名注册器解析
       Class<? extends Cache> typeClass = typeAliasRegistry.resolveAlias(type);
+      // 获取 eviction 属性 (缓存清除策略), 默认值是 LRU. 还包含(FIFO, SOFT, WEAK)
       String eviction = context.getStringAttribute("eviction", "LRU");
+      // 解析 eviction 属性的 Class 对象. 通过别名注册器解析
       Class<? extends Cache> evictionClass = typeAliasRegistry.resolveAlias(eviction);
+
+      // 获取 flushInterval 属性 (缓存属性间隔, 如果设置了则使用 ScheduledCache 进行装饰).
       Long flushInterval = context.getLongAttribute("flushInterval");
+      // 获取 size 属性 (缓存大小)
       Integer size = context.getIntAttribute("size");
+      // 获取 readOnly 属性 (缓存是否只读, 如果为 true 则使用 SerializedCache 进行装饰)
       boolean readWrite = !context.getBooleanAttribute("readOnly", false);
+      // 获取 blocking 属性 (缓存是否为阻塞方式, 如果为 ture 则使用 BlockingCache 进行装饰)
       boolean blocking = context.getBooleanAttribute("blocking", false);
+      // 解析所有的 <property> 节点, 并将其转换成 Properties 对象
       Properties props = context.getChildrenAsProperties();
+
+      // 使用 MapperBuilderAssistant 对象创建缓存对象(Cache). 并添加
       builderAssistant.useNewCache(typeClass, evictionClass, flushInterval, size, readWrite, blocking, props);
     }
   }
 
+  /**
+   * 解析 <parameterMap> 节点 .(该节点已经废弃)
+   *
+   * @param list
+   */
   private void parameterMapElement(List<XNode> list) {
     for (XNode parameterMapNode : list) {
       String id = parameterMapNode.getStringAttribute("id");
@@ -240,9 +376,16 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析多个 <resultMap> 节点
+   *
+   * @param list
+   */
   private void resultMapElements(List<XNode> list) {
+    // 遍历多个 <resultMap> 节点
     for (XNode resultMapNode : list) {
       try {
+        // 解析 <resultMap> 节点
         resultMapElement(resultMapNode);
       } catch (IncompleteElementException e) {
         // ignore, it will be retried
@@ -250,42 +393,86 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析 <resultMap> 节点
+   *
+   * @param resultMapNode
+   * @return
+   */
   private ResultMap resultMapElement(XNode resultMapNode) {
     return resultMapElement(resultMapNode, Collections.emptyList(), null);
   }
 
+  /**
+   * 解析 <resultMap> 节点
+   *
+   * <resultMap id="blogWithPostsLazy" type="Blog">
+   *   <id property="id" column="id"/>
+   *   <result property="title" column="title"/>
+   *   <association property="author" column="author_id" select="org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthorWithInlineParams" fetchType="lazy"/>
+   *   <collection property="posts" column="id" select="selectPostsForBlog" fetchType="lazy"/>
+   * </resultMap>
+   *
+   * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E7%BB%93%E6%9E%9C%E6%98%A0%E5%B0%84}
+   * @see #resultMapElement(XNode)
+   * @param resultMapNode
+   * @param additionalResultMappings
+   * @param enclosingType
+   * @return
+   */
   private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings, Class<?> enclosingType) {
     ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
+
+    // 获取类型 <resultMap> 节点获取 type 属性
     String type = resultMapNode.getStringAttribute("type",
         resultMapNode.getStringAttribute("ofType",
             resultMapNode.getStringAttribute("resultType",
                 resultMapNode.getStringAttribute("javaType"))));
+
+    // 将 type 属性解析成 Class 对象
     Class<?> typeClass = resolveClass(type);
     if (typeClass == null) {
       typeClass = inheritEnclosingType(resultMapNode, enclosingType);
     }
     Discriminator discriminator = null;
+
+    // 记录映射集合
     List<ResultMapping> resultMappings = new ArrayList<>(additionalResultMappings);
+    // 获取所有的子节点
     List<XNode> resultChildren = resultMapNode.getChildren();
+
+    // 遍历
     for (XNode resultChild : resultChildren) {
+      // 处理 <constructor> 节点
       if ("constructor".equals(resultChild.getName())) {
+        // 根据所有子节点创建 ResultMapping 对象, 并添加到 resultMappings 集合中
         processConstructorElement(resultChild, typeClass, resultMappings);
       } else if ("discriminator".equals(resultChild.getName())) {
+        // 处理 <discriminator> 节点
         discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
       } else {
+        // 处理 <id> 、<result>、<association>、<collection> 等节点
+
         List<ResultFlag> flags = new ArrayList<>();
+        // 如果是 <id> 节点则向 flags 集合中添加 ResultFlag.ID
         if ("id".equals(resultChild.getName())) {
           flags.add(ResultFlag.ID);
         }
+        // 创建 ResultMapping 对象, 并添加到 resultMappings 集合中
         resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
       }
     }
-    String id = resultMapNode.getStringAttribute("id",
-            resultMapNode.getValueBasedIdentifier());
+    // 获取 id 属性
+    String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
+    // 获取 extends 属性
     String extend = resultMapNode.getStringAttribute("extends");
+    // 获取 autoMapping 属性
     Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
+
+    // 创建 ResultMapResolver 解析对象
     ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
     try {
+      // 解析并返回
       return resultMapResolver.resolve();
     } catch (IncompleteElementException e) {
       configuration.addIncompleteResultMap(resultMapResolver);
@@ -306,14 +493,33 @@ public class XMLMapperBuilder extends BaseBuilder {
     return null;
   }
 
+  /**
+   * 解析 <constructor> 节点
+   *
+   * 根据所有子节点创建 ResultMapping 对象, 并添加到 resultMappings 集合中
+   *
+   * <constructor>
+   *    <idArg column="id" javaType="int"/>
+   *    <arg column="username" javaType="String"/>
+   *    <arg column="age" javaType="_int"/>
+   * </constructor>
+   *
+   * @param resultChild
+   * @param resultType
+   * @param resultMappings
+   */
   private void processConstructorElement(XNode resultChild, Class<?> resultType, List<ResultMapping> resultMappings) {
+    // 获取 <constructor> 节点下的所有子节点
     List<XNode> argChildren = resultChild.getChildren();
+
+    // 遍历所有子节点, 创建 ResultMapping 对象, 并添加到 resultMappings 集合中
     for (XNode argChild : argChildren) {
       List<ResultFlag> flags = new ArrayList<>();
       flags.add(ResultFlag.CONSTRUCTOR);
       if ("idArg".equals(argChild.getName())) {
         flags.add(ResultFlag.ID);
       }
+      // 创建 ResultMapping 对象, 并添加到 resultMappings 集合中
       resultMappings.add(buildResultMappingFromContext(argChild, resultType, flags));
     }
   }
@@ -368,6 +574,13 @@ public class XMLMapperBuilder extends BaseBuilder {
     return context.getStringAttribute("databaseId") == null;
   }
 
+  /**
+   *
+   * @param context
+   * @param resultType
+   * @param flags
+   * @return
+   */
   private ResultMapping buildResultMappingFromContext(XNode context, Class<?> resultType, List<ResultFlag> flags) {
     String property;
     if (flags.contains(ResultFlag.CONSTRUCTOR)) {

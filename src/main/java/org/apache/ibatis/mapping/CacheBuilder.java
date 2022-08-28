@@ -38,13 +38,21 @@ import org.apache.ibatis.reflection.SystemMetaObject;
  * @author Clinton Begin
  */
 public class CacheBuilder {
+  // 缓存id (使用的映射文件的 namespace 属性值)
   private final String id;
+  // 缓存实现类
   private Class<? extends Cache> implementation;
+  // 装饰器. 只有LRU, FIFO, SOFT, WEAK 这几种(默认值是 LRU )
   private final List<Class<? extends Cache>> decorators;
+  // 大小
   private Integer size;
+  // 清理间隔
   private Long clearInterval;
+  // 是否为只读
   private boolean readWrite;
+  // 属性信息
   private Properties properties;
+  // 是否为阻塞方式
   private boolean blocking;
 
   public CacheBuilder(String id) {
@@ -89,16 +97,28 @@ public class CacheBuilder {
     return this;
   }
 
+  /**
+   * 创建缓存对象
+   *
+   * @return
+   */
   public Cache build() {
+    // 设置默认的实现类与装饰器(默认实现类: PerpetualCache, 默认装饰器为: LruCache)
     setDefaultImplementations();
+    // 根据实现类创建实例
     Cache cache = newBaseCacheInstance(implementation, id);
+    // 设置配置信息
     setCacheProperties(cache);
     // issue #352, do not apply decorators to custom caches
+    // 当缓存的类型为 PerpetualCache 时, 使用装饰器对其进行包装
     if (PerpetualCache.class.equals(cache.getClass())) {
       for (Class<? extends Cache> decorator : decorators) {
+        // 创建装饰器
         cache = newCacheDecoratorInstance(decorator, cache);
+        // 设置装饰器的配置
         setCacheProperties(cache);
       }
+      // 设置 MyBatis 默认的装饰器
       cache = setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
       cache = new LoggingCache(cache);
@@ -106,30 +126,48 @@ public class CacheBuilder {
     return cache;
   }
 
+  /**
+   * 设置默认的类型与装饰器类型
+   */
   private void setDefaultImplementations() {
+    // 默认实现为空时使用 PerpetualCache
     if (implementation == null) {
       implementation = PerpetualCache.class;
+      // 装饰器为空时使用 LruCache
       if (decorators.isEmpty()) {
         decorators.add(LruCache.class);
       }
     }
   }
 
+  /**
+   * 设置默认的装饰器
+   *
+   * @param cache
+   * @return
+   */
   private Cache setStandardDecorators(Cache cache) {
     try {
+      // 根据缓存创建 MetaObject 对象
       MetaObject metaCache = SystemMetaObject.forObject(cache);
+      // 设置 size 属性
       if (size != null && metaCache.hasSetter("size")) {
         metaCache.setValue("size", size);
       }
+      // 是否使用 ScheduledCache 进行包装
       if (clearInterval != null) {
         cache = new ScheduledCache(cache);
         ((ScheduledCache) cache).setClearInterval(clearInterval);
       }
+      // 是否使用 SerializedCache 进行包装
       if (readWrite) {
         cache = new SerializedCache(cache);
       }
+      // 使用 LoggingCache 与 SynchronizedCache 进行包装
       cache = new LoggingCache(cache);
       cache = new SynchronizedCache(cache);
+
+      // 是否使用 BlockingCache 进行包装
       if (blocking) {
         cache = new BlockingCache(cache);
       }
@@ -139,6 +177,11 @@ public class CacheBuilder {
     }
   }
 
+  /**
+   * 设置配置信息
+   *
+   * @param cache
+   */
   private void setCacheProperties(Cache cache) {
     if (properties != null) {
       MetaObject metaCache = SystemMetaObject.forObject(cache);
@@ -186,15 +229,30 @@ public class CacheBuilder {
     }
   }
 
+  /**
+   * 使用id属性实例化缓存对象
+   *
+   * @param cacheClass
+   * @param id
+   * @return
+   */
   private Cache newBaseCacheInstance(Class<? extends Cache> cacheClass, String id) {
+    // 获取参数类型为 String 的构造器
     Constructor<? extends Cache> cacheConstructor = getBaseCacheConstructor(cacheClass);
     try {
+      // 使用 id 值实例化对象
       return cacheConstructor.newInstance(id);
     } catch (Exception e) {
       throw new CacheException("Could not instantiate cache implementation (" + cacheClass + "). Cause: " + e, e);
     }
   }
 
+  /**
+   * 获取类型为 String 的构造器
+   *
+   * @param cacheClass
+   * @return
+   */
   private Constructor<? extends Cache> getBaseCacheConstructor(Class<? extends Cache> cacheClass) {
     try {
       return cacheClass.getConstructor(String.class);

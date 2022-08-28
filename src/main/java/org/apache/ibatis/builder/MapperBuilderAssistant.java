@@ -50,13 +50,23 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
+ * MapperBuilderAssistant 是 BaseBuilder 的子类
+ *
+ * 主要负责在Mapper.xml 映射配置文件中,出现的所有元素进行构建
+ *
+ * 类主要有 MappedStatement、Cache、ParameterMap、ParameterMapping、ResultMap、ResultMapping、Discriminator
+ *
  * @author Clinton Begin
  */
 public class MapperBuilderAssistant extends BaseBuilder {
 
+  // namespace 属性 (命名空间)
   private String currentNamespace;
+  // 资源
   private final String resource;
+  // 缓存
   private Cache currentCache;
+  // 缓存引用是否成功 (false 为成功, true 表示失败)
   private boolean unresolvedCacheRef; // issue #676
 
   public MapperBuilderAssistant(Configuration configuration, String resource) {
@@ -65,10 +75,19 @@ public class MapperBuilderAssistant extends BaseBuilder {
     this.resource = resource;
   }
 
+  /**
+   * 获取 namespace 属性
+   *
+   * @return
+   */
   public String getCurrentNamespace() {
     return currentNamespace;
   }
 
+  /**
+   * 设置 namespace 属性
+   * @param currentNamespace
+   */
   public void setCurrentNamespace(String currentNamespace) {
     if (currentNamespace == null) {
       throw new BuilderException("The mapper element requires a namespace attribute to be specified.");
@@ -103,24 +122,48 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return currentNamespace + "." + base;
   }
 
+  /**
+   * 使用缓存引用
+   *
+   * @param namespace 被引用的缓存
+   * @return
+   */
   public Cache useCacheRef(String namespace) {
+    // 如果被引用的缓存名称为空抛出异常
     if (namespace == null) {
       throw new BuilderException("cache-ref element requires a namespace attribute.");
     }
     try {
+      // 标记解析引用的缓存未成功
       unresolvedCacheRef = true;
+      // 获取被引用的缓存, 数据不存在抛出异常
       Cache cache = configuration.getCache(namespace);
       if (cache == null) {
         throw new IncompleteElementException("No cache for namespace '" + namespace + "' could be found.");
       }
+      // 将被引用的缓存赋值给当前缓存
       currentCache = cache;
+      // 标记解析引用的缓存成功
       unresolvedCacheRef = false;
       return cache;
     } catch (IllegalArgumentException e) {
+      // 被引用的缓存不存在,抛出 IncompleteElementException 异常
       throw new IncompleteElementException("No cache for namespace '" + namespace + "' could be found.", e);
     }
   }
 
+  /**
+   * 创建缓存
+   *
+   * @param typeClass
+   * @param evictionClass
+   * @param flushInterval
+   * @param size
+   * @param readWrite
+   * @param blocking
+   * @param props
+   * @return
+   */
   public Cache useNewCache(Class<? extends Cache> typeClass,
       Class<? extends Cache> evictionClass,
       Long flushInterval,
@@ -128,6 +171,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       boolean readWrite,
       boolean blocking,
       Properties props) {
+    // 使用 CacheBuilder 对象构建 Cache (使用了建造者模式)
     Cache cache = new CacheBuilder(currentNamespace)
         .implementation(valueOrDefault(typeClass, PerpetualCache.class))
         .addDecorator(valueOrDefault(evictionClass, LruCache.class))
@@ -137,7 +181,10 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .blocking(blocking)
         .properties(props)
         .build();
+    // 构造好的缓存对象的 id 是 namespace
+    // 将缓存对象添加到 Configuration 中的 `Map<String, Cache> caches` 属性中. 其 key 为类名, value 为具体的缓存对象
     configuration.addCache(cache);
+    // 记录缓存对象
     currentCache = cache;
     return cache;
   }

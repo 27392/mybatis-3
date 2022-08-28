@@ -26,11 +26,17 @@ import org.apache.ibatis.mapping.ResultMapping;
  */
 public class ResultMapResolver {
   private final MapperBuilderAssistant assistant;
+  // id 属性
   private final String id;
+  // 类型
   private final Class<?> type;
+  // 继承
   private final String extend;
+  // 鉴别器
   private final Discriminator discriminator;
+  // 记录映射集合
   private final List<ResultMapping> resultMappings;
+  // 自动映射
   private final Boolean autoMapping;
 
   public ResultMapResolver(MapperBuilderAssistant assistant, String id, Class<?> type, String extend, Discriminator discriminator, List<ResultMapping> resultMappings, Boolean autoMapping) {
