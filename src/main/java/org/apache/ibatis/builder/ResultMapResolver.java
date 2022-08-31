@@ -25,6 +25,8 @@ import org.apache.ibatis.mapping.ResultMapping;
  * @author Eduardo Macarron
  */
 public class ResultMapResolver {
+
+  // MapperBuilderAssistant 对象
   private final MapperBuilderAssistant assistant;
   // id 属性
   private final String id;
