@@ -64,7 +64,7 @@ public class XMLMapperBuilder extends BaseBuilder {
   private final XPathParser parser;
   // MapperBuilderAssistant 对象 (负责映射文件中所有元素对应类的构建;包含 Cache、ResultMap等)
   private final MapperBuilderAssistant builderAssistant;
-  // TODO
+  // sql 片段 (与 Configuration 类中的 sqlFragments 是一个引用)
   private final Map<String, XNode> sqlFragments;
   // 文件资源 (url 或 resource 属性的值)
   private final String resource;
@@ -122,7 +122,9 @@ public class XMLMapperBuilder extends BaseBuilder {
       bindMapperForNamespace();
     }
 
-    // 处理解析失败的集合
+    // Mybatis 解析映射配置文件时, 是按照从文件头到文件尾的顺序解析的，
+    // 但是有时候在解析一个节点时，会引用定义在该节点之后的、还未解析的节点，这就会导致解析失败井抛出 IncompleteElementException
+    // 所以在每解析完一个映射文件后都会尝试再次去解析那些没有解析成功的对象
     parsePendingResultMaps();
     parsePendingCacheRefs();
     parsePendingStatements();
@@ -217,6 +219,7 @@ public class XMLMapperBuilder extends BaseBuilder {
   /**
    * 解析 <select>、<insert>、<update>、<delete> 等节点
    *
+   * @see #parsePendingStatements()
    * @param list
    * @param requiredDatabaseId
    */
@@ -225,15 +228,20 @@ public class XMLMapperBuilder extends BaseBuilder {
       // 创建 XMLStatementBuilder 对象
       final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
       try {
-        // 解析
+        // 开始解析节点
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
-        // 解析失败将 XMLStatementBuilder 对象保存到 Configuration 中
+        // 解析失败(应该是被引用的缓存还为找到)将 XMLStatementBuilder 对象保存到 Configuration 中
         configuration.addIncompleteStatement(statementParser);
       }
     }
   }
 
+  /**
+   * 尝试解析未加载成功的 ResultMap. 如果成功则将其从 Configuration 对应的集合中删除
+   *
+   * @see #resultMapElement(XNode, List, Class)
+   */
   private void parsePendingResultMaps() {
     Collection<ResultMapResolver> incompleteResultMaps = configuration.getIncompleteResultMaps();
     synchronized (incompleteResultMaps) {
@@ -249,6 +257,11 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 尝试解析未加载成功的缓存引用. 如果成功则将其从 Configuration 对应的集合中删除
+   *
+   * @see #cacheElement(XNode)
+   */
   private void parsePendingCacheRefs() {
     Collection<CacheRefResolver> incompleteCacheRefs = configuration.getIncompleteCacheRefs();
     synchronized (incompleteCacheRefs) {
@@ -264,6 +277,11 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 尝试解析 <select>、<insert>、<update>、<delete> 节点. 如果成功则将其从 Configuration 对应的集合中删除
+   *
+   * @see #buildStatementFromContext(List, String)
+   */
   private void parsePendingStatements() {
     Collection<XMLStatementBuilder> incompleteStatements = configuration.getIncompleteStatements();
     synchronized (incompleteStatements) {
@@ -285,6 +303,7 @@ public class XMLMapperBuilder extends BaseBuilder {
    * <cache-ref namespace="org.apache.ibatis.submitted.resolution.cachereffromxml.UserMapper" />
    *
    * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#cache-ref}
+   * @see #parsePendingCacheRefs()
    * @param context
    */
   private void cacheRefElement(XNode context) {
@@ -299,7 +318,7 @@ public class XMLMapperBuilder extends BaseBuilder {
         // 获取关联的缓存, 并将其设置到当前的缓存中
         cacheRefResolver.resolveCacheRef();
       } catch (IncompleteElementException e) {
-        // 被引用的缓存不存在, 将 CacheRefResolver 对象保存到 Configuration 中
+        // 创建失败(应该是被引用的缓存不存在), 将 CacheRefResolver 对象保存到 Configuration 中
         configuration.addIncompleteCacheRef(cacheRefResolver);
       }
     }
@@ -444,7 +463,7 @@ public class XMLMapperBuilder extends BaseBuilder {
    * </resultMap>
    *
    * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E7%BB%93%E6%9E%9C%E6%98%A0%E5%B0%84}
-   * @see #resultMapElement(XNode)
+   * @see #parsePendingResultMaps()
    * @param resultMapNode
    * @param additionalResultMappings
    * @param enclosingType
@@ -509,7 +528,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       // 使用 ResultMapResolver 创建 ResultMap 对象. 并添加到 Configuration 中
       return resultMapResolver.resolve();
     } catch (IncompleteElementException e) {
-      // 创建失败, 将 ResultMapResolver 对象保存到 Configuration 中
+      // 创建失败(应该是依赖的父 resultMap 对象还未找到), 将 ResultMapResolver 对象保存到 Configuration 中
       configuration.addIncompleteResultMap(resultMapResolver);
       throw e;
     }

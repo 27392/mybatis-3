@@ -198,6 +198,7 @@ public class Configuration {
 
   // 已加载的资源列表 (用来判断是否重复加载)
   protected final Set<String> loadedResources = new HashSet<>();
+  // sql 片段映射, 映射配置文件中 <sql> 节点 (key: namespace.id)
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
   // 解析失败的 XMLStatementBuilder 对象集合
@@ -282,6 +283,11 @@ public class Configuration {
     }
   }
 
+  /**
+   * 获取 vfs 实现类
+   *
+   * @return
+   */
   public Class<? extends VFS> getVfsImpl() {
     return this.vfsImpl;
   }
@@ -726,6 +732,8 @@ public class Configuration {
   }
 
   /**
+   * 获取所有的插件
+   *
    * Gets the interceptors.
    *
    * @return the interceptors
@@ -853,7 +861,7 @@ public class Configuration {
   }
 
   /**
-   * 获取所有换成的名称
+   * 获取所有缓存的名称
    *
    * @return
    */
@@ -973,26 +981,56 @@ public class Configuration {
     return mappedStatements.values();
   }
 
+  /**
+   * 获取解析失败的 XMLStatementBuilder 集合
+   *
+   * @return
+   */
   public Collection<XMLStatementBuilder> getIncompleteStatements() {
     return incompleteStatements;
   }
 
+  /**
+   * 添加 XMLStatementBuilder 到解析失败的集合
+   *
+   * @param incompleteStatement
+   */
   public void addIncompleteStatement(XMLStatementBuilder incompleteStatement) {
     incompleteStatements.add(incompleteStatement);
   }
 
+  /**
+   * 获取解析失败的 CacheRefResolver 集合
+   *
+   * @return
+   */
   public Collection<CacheRefResolver> getIncompleteCacheRefs() {
     return incompleteCacheRefs;
   }
 
+  /**
+   * 添加 CacheRefResolver 到解析失败的集合
+   *
+   * @param incompleteCacheRef
+   */
   public void addIncompleteCacheRef(CacheRefResolver incompleteCacheRef) {
     incompleteCacheRefs.add(incompleteCacheRef);
   }
 
+  /**
+   * 获取解析失败的 ResultMapResolver 集合
+   *
+   * @return
+   */
   public Collection<ResultMapResolver> getIncompleteResultMaps() {
     return incompleteResultMaps;
   }
 
+  /**
+   * 添加 ResultMapResolver 到解析失败的集合
+   *
+   * @param resultMapResolver
+   */
   public void addIncompleteResultMap(ResultMapResolver resultMapResolver) {
     incompleteResultMaps.add(resultMapResolver);
   }
@@ -1016,6 +1054,11 @@ public class Configuration {
     return mappedStatements.get(id);
   }
 
+  /**
+   * 获取 sql 片段, <sql> 节点
+   *
+   * @return
+   */
   public Map<String, XNode> getSqlFragments() {
     return sqlFragments;
   }

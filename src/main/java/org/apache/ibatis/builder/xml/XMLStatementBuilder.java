@@ -55,6 +55,7 @@ public class XMLStatementBuilder extends BaseBuilder {
 
   /**
    * 解析 <select>、<insert>、<update>、<delete> 等节点
+   * @see XMLMapperBuilder#buildStatementFromContext(List, String)
    */
   public void parseStatementNode() {
     // 获取 id 和 databaseId 属性
