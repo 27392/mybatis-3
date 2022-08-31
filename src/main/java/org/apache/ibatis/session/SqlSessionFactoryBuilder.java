@@ -32,21 +32,55 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
  */
 public class SqlSessionFactoryBuilder {
 
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param reader
+   * @return
+   */
   public SqlSessionFactory build(Reader reader) {
+    // 调用重载方法
     return build(reader, null, null);
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param reader
+   * @param environment
+   * @return
+   */
   public SqlSessionFactory build(Reader reader, String environment) {
     return build(reader, environment, null);
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param reader
+   * @param properties
+   * @return
+   */
   public SqlSessionFactory build(Reader reader, Properties properties) {
     return build(reader, null, properties);
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   * <p>
+   * 所有以 Reader 为参数的 build() 重载方法都会调用该方法
+   *
+   * @param reader
+   * @param environment
+   * @param properties
+   * @return
+   */
   public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
     try {
+      // 创建 XMLConfigBuilder 对象
       XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
+      // 解析配置文件, 得到 Configuration 对象
+      // 使用 Configuration 对象创建 SqlSessionFactory 对象并返回
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
@@ -60,21 +94,56 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  // 以下是使用 InputStream 方式
+
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param inputStream
+   * @return
+   */
   public SqlSessionFactory build(InputStream inputStream) {
     return build(inputStream, null, null);
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param inputStream
+   * @param environment
+   * @return
+   */
   public SqlSessionFactory build(InputStream inputStream, String environment) {
     return build(inputStream, environment, null);
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param inputStream
+   * @param properties
+   * @return
+   */
   public SqlSessionFactory build(InputStream inputStream, Properties properties) {
     return build(inputStream, null, properties);
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   * <p>
+   * 所有以 InputStream 为参数的 build() 重载方法都会调用该方法
+   *
+   * @param inputStream
+   * @param environment
+   * @param properties
+   * @return
+   */
   public SqlSessionFactory build(InputStream inputStream, String environment, Properties properties) {
     try {
+      // 创建 XMLConfigBuilder 对象
       XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
+      // 解析配置文件, 得到 Configuration 对象
+      // 使用 Configuration 对象创建 SqlSessionFactory 对象并返回
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
@@ -88,6 +157,12 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  /**
+   * 创建 SqlSessionFactory
+   *
+   * @param config
+   * @return
+   */
   public SqlSessionFactory build(Configuration config) {
     return new DefaultSqlSessionFactory(config);
   }
