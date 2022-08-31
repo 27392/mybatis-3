@@ -118,7 +118,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       configurationElement(parser.evalNode("/mapper"));
       // 将资源保存到 Configuration 中, 以防重复加载
       configuration.addLoadedResource(resource);
-      //
+      // 注册 Mapper 接口
       bindMapperForNamespace();
     }
 
@@ -764,20 +764,29 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 注册 Mapper 接口
+   */
   private void bindMapperForNamespace() {
+    // 获取当前 namespace
     String namespace = builderAssistant.getCurrentNamespace();
     if (namespace != null) {
       Class<?> boundType = null;
       try {
+        // 将 namespace 解析成 Class 类型.(等于是找到对应的接口)
         boundType = Resources.classForName(namespace);
       } catch (ClassNotFoundException e) {
         // ignore, bound type is not required
       }
+      // Mapper 接口存在, 并且没有绑定过
       if (boundType != null && !configuration.hasMapper(boundType)) {
         // Spring may not know the real resource name so we set a flag
         // to prevent loading again this resource from the mapper interface
         // look at MapperAnnotationBuilder#loadXmlResource
+
+        // 将资源保存到 Configuration 中, 以防重复加载
         configuration.addLoadedResource("namespace:" + namespace);
+        // 注册 Mapper 接口. 使用 MapperRegistry 对象;
         configuration.addMapper(boundType);
       }
     }
