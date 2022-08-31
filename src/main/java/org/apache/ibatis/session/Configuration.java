@@ -1242,6 +1242,13 @@ public class Configuration {
       return this;
     }
 
+    /**
+     * 当 key 存在 '.' 时会额外存一份
+     *
+     * @param key
+     * @param value
+     * @return
+     */
     @Override
     @SuppressWarnings("unchecked")
     public V put(String key, V value) {
@@ -1261,6 +1268,7 @@ public class Configuration {
           super.put(shortKey, (V) new Ambiguity(shortKey));
         }
       }
+      // 正常放入
       return super.put(key, value);
     }
 

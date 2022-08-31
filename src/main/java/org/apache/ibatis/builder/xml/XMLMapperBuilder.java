@@ -60,7 +60,7 @@ import org.apache.ibatis.type.TypeHandler;
  */
 public class XMLMapperBuilder extends BaseBuilder {
 
-  // xpath 对象
+  // XPathParser 对象
   private final XPathParser parser;
   // MapperBuilderAssistant 对象 (负责映射文件中所有元素对应类的构建;包含 Cache、ResultMap等)
   private final MapperBuilderAssistant builderAssistant;
@@ -340,7 +340,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       // 解析所有的 <property> 节点, 并将其转换成 Properties 对象
       Properties props = context.getChildrenAsProperties();
 
-      // 使用 MapperBuilderAssistant 对象创建缓存对象(Cache). 并添加
+      // 使用 MapperBuilderAssistant 对象创建缓存对象(Cache).
       builderAssistant.useNewCache(typeClass, evictionClass, flushInterval, size, readWrite, blocking, props);
     }
   }
@@ -404,13 +404,26 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   /**
-   * 解析 <resultMap> 节点
+   * 递归解析 <resultMap>、<collection>、<association>、<discriminator> 等节点
+   *
+   * 因为 <collection>、<association>、<discriminator> 等节点中子节点与 <resultMap> 基本一样. 所以这是一个通用解析的方法
+   *
+   * 1. 先将子节点解析成 ResultMapping 对象
+   * 2. 在将 ResultMapping 与自身的属性一起创建 ResultMap 对象
    *
    * <resultMap id="blogWithPostsLazy" type="Blog">
    *   <id property="id" column="id"/>
    *   <result property="title" column="title"/>
    *   <association property="author" column="author_id" select="org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthorWithInlineParams" fetchType="lazy"/>
-   *   <collection property="posts" column="id" select="selectPostsForBlog" fetchType="lazy"/>
+   *   <association property="author" javaType="Author">
+   *     <id property="id" column="author_id"/>
+   *     <result property="username" column="author_username"/>
+   *   </association>
+   *   <collection property="posts" ofType="domain.blog.Post">
+   *      <id property="id" column="post_id"/>
+   *      <result property="subject" column="post_subject"/>
+   *      <result property="body" column="post_body"/>
+   *   </collection>
    * </resultMap>
    *
    * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E7%BB%93%E6%9E%9C%E6%98%A0%E5%B0%84}
@@ -423,7 +436,10 @@ public class XMLMapperBuilder extends BaseBuilder {
   private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings, Class<?> enclosingType) {
     ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
 
-    // 获取类型 <resultMap> 节点获取 type 属性
+    // 如果是 <resultMap>     节点获取 type 属性
+    // 如果是 <collection>    节点获取 ofType 属性
+    // 如果是 <discriminator> 节点获取 resultType 属性
+    // 如果是 <association>   节点获取 javaType 属性
     String type = resultMapNode.getStringAttribute("type",
         resultMapNode.getStringAttribute("ofType",
             resultMapNode.getStringAttribute("resultType",
@@ -432,6 +448,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     // 将 type 属性解析成 Class 对象
     Class<?> typeClass = resolveClass(type);
     if (typeClass == null) {
+      // 如果为空, 则判断是否为 <association>、<case> 节点，并从它们中解析
       typeClass = inheritEnclosingType(resultMapNode, enclosingType);
     }
     Discriminator discriminator = null;
@@ -454,7 +471,7 @@ public class XMLMapperBuilder extends BaseBuilder {
         // 处理 <id> 、<result>、<association>、<collection> 等节点
 
         List<ResultFlag> flags = new ArrayList<>();
-        // 如果是 <id> 节点则向 flags 集合中添加 ResultFlag.ID
+        // 如果是 <id> 节点则向 flags 集合中添加 `ID` 标识
         if ("id".equals(resultChild.getName())) {
           flags.add(ResultFlag.ID);
         }
@@ -464,7 +481,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
     // 获取 id 属性
     String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
-    // 获取 extends 属性
+    // 获取 extends 属性. 该属性指定了<resultMap>节点的继承关系
     String extend = resultMapNode.getStringAttribute("extends");
     // 获取 autoMapping 属性
     Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
@@ -472,7 +489,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     // 创建 ResultMapResolver 解析对象
     ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
     try {
-      // 解析并返回
+      // 使用 ResultMapResolver 创建 ResultMap 对象
       return resultMapResolver.resolve();
     } catch (IncompleteElementException e) {
       configuration.addIncompleteResultMap(resultMapResolver);
@@ -480,6 +497,13 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 嵌套类型
+   *
+   * @param resultMapNode
+   * @param enclosingType
+   * @return
+   */
   protected Class<?> inheritEnclosingType(XNode resultMapNode, Class<?> enclosingType) {
     if ("association".equals(resultMapNode.getName()) && resultMapNode.getStringAttribute("resultMap") == null) {
       String property = resultMapNode.getStringAttribute("property");
@@ -499,24 +523,27 @@ public class XMLMapperBuilder extends BaseBuilder {
    * 根据所有子节点创建 ResultMapping 对象, 并添加到 resultMappings 集合中
    *
    * <constructor>
-   *    <idArg column="id" javaType="int"/>
-   *    <arg column="username" javaType="String"/>
-   *    <arg column="age" javaType="_int"/>
+   *    <idArg column="id" javaType="int" name="id" />
+   *    <arg column="age" javaType="_int" name="age" />
+   *    <arg column="username" javaType="String" name="username" />
    * </constructor>
    *
+   * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95}
    * @param resultChild
    * @param resultType
    * @param resultMappings
    */
   private void processConstructorElement(XNode resultChild, Class<?> resultType, List<ResultMapping> resultMappings) {
-    // 获取 <constructor> 节点下的所有子节点
+    // 获取 <constructor> 节点下的所有子节点 (<idArg> 与 <arg>)
     List<XNode> argChildren = resultChild.getChildren();
 
-    // 遍历所有子节点, 创建 ResultMapping 对象, 并添加到 resultMappings 集合中
+    // 遍历所有子节点 (<idArg> 与 <arg>), 创建 ResultMapping 对象, 并添加到 resultMappings 集合中
     for (XNode argChild : argChildren) {
       List<ResultFlag> flags = new ArrayList<>();
+      // 对所有的构造参数添加 `CONSTRUCTOR` 标识
       flags.add(ResultFlag.CONSTRUCTOR);
       if ("idArg".equals(argChild.getName())) {
+        // id构造参数添加 `ID` 标识
         flags.add(ResultFlag.ID);
       }
       // 创建 ResultMapping 对象, 并添加到 resultMappings 集合中
@@ -524,6 +551,14 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析 <discriminator> 节点 (不常用)
+   *
+   * @param context
+   * @param resultType
+   * @param resultMappings
+   * @return
+   */
   private Discriminator processDiscriminatorElement(XNode context, Class<?> resultType, List<ResultMapping> resultMappings) {
     String column = context.getStringAttribute("column");
     String javaType = context.getStringAttribute("javaType");
@@ -575,7 +610,11 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   /**
+   * 创建 ResultMapping 对象
    *
+   * 根据 <id> 、<result>、<association>、<collection> 等节点创建
+   *
+   * @see #processConstructorElement
    * @param context
    * @param resultType
    * @param flags
@@ -583,44 +622,93 @@ public class XMLMapperBuilder extends BaseBuilder {
    */
   private ResultMapping buildResultMappingFromContext(XNode context, Class<?> resultType, List<ResultFlag> flags) {
     String property;
+    // 如果是 <constructor> 中的元素(<idArg> 与 <arg>), 则获取其中的 name 属性, 其它的元素获取其 property 属性
     if (flags.contains(ResultFlag.CONSTRUCTOR)) {
       property = context.getStringAttribute("name");
     } else {
       property = context.getStringAttribute("property");
     }
+    // 获取 column、javaType、jdbcType 等基础映射属性
     String column = context.getStringAttribute("column");
     String javaType = context.getStringAttribute("javaType");
     String jdbcType = context.getStringAttribute("jdbcType");
+
+    // -- 嵌套 Select 查询. 调用其它映射SQL完成查询, 传递参数需要使用 column 字段, fetchType 字段是加载方式
+    // https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E5%85%B3%E8%81%94%E7%9A%84%E5%B5%8C%E5%A5%97-select-%E6%9F%A5%E8%AF%A2
+    // https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E9%9B%86%E5%90%88%E7%9A%84%E5%B5%8C%E5%A5%97-select-%E6%9F%A5%E8%AF%A2
+    // 获取 select 属性;(该属性用于关联(一对多,一对一等)查询, 依赖于其它的映射SQL. 且只在 <association> 与 <collection> 节点中存在)
     String nestedSelect = context.getStringAttribute("select");
+
+    // -- 处理关联的嵌套结果映射, 一般是多个表联合查询. 与 Select 查询不同的是它不需要关联其它SQL
+    // https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E5%85%B3%E8%81%94%E7%9A%84%E5%B5%8C%E5%A5%97%E7%BB%93%E6%9E%9C%E6%98%A0%E5%B0%84
+    // https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E9%9B%86%E5%90%88%E7%9A%84%E5%B5%8C%E5%A5%97%E7%BB%93%E6%9E%9C%E6%98%A0%E5%B0%84
+    // 获取 resultMap、notNullColumn、columnPrefix 属性; 关联的嵌套结果映射
+    // 这些属性用于处理关联(一对多,一对一等)的结果映射, 且只在 <association> 与 <collection> 节点中存在)
     String nestedResultMap = context.getStringAttribute("resultMap", () ->
         processNestedResultMappings(context, Collections.emptyList(), resultType));
     String notNullColumn = context.getStringAttribute("notNullColumn");
     String columnPrefix = context.getStringAttribute("columnPrefix");
+
+    // 获取 typeHandler 属性
     String typeHandler = context.getStringAttribute("typeHandler");
+
+    // -- 处理多结果集. 只有在使用存储过程时存在多结果集
+    // https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E5%85%B3%E8%81%94%E7%9A%84%E5%A4%9A%E7%BB%93%E6%9E%9C%E9%9B%86%EF%BC%88resultset%EF%BC%89
+    // 获取 resultSet、foreignColumn 等属性
     String resultSet = context.getStringAttribute("resultSet");
     String foreignColumn = context.getStringAttribute("foreignColumn");
+
+    // -- 处理嵌套查询加载方式
+    // 获取 fetchType 属性(嵌套查询的加载方式). 如果配置了 `lazyLoadingEnabled` 属性为 true, 且属性值为 lazy .则表示延迟加载, 否则是及时加载
+    // 该属性只有在 <association> 与 <collection> 节点中存在
     boolean lazy = "lazy".equals(context.getStringAttribute("fetchType", configuration.isLazyLoadingEnabled() ? "lazy" : "eager"));
+
+    // 解析 javaType、typeHandler、jdbcType. 将其转换成指定的类
     Class<?> javaTypeClass = resolveClass(javaType);
     Class<? extends TypeHandler<?>> typeHandlerClass = resolveClass(typeHandler);
     JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
+
+    // 使用 MapperBuilderAssistant 创建 ResultMapping
     return builderAssistant.buildResultMapping(resultType, property, column, javaTypeClass, jdbcTypeEnum, nestedSelect, nestedResultMap, notNullColumn, columnPrefix, typeHandlerClass, flags, resultSet, foreignColumn, lazy);
   }
 
+  /**
+   * 解析嵌套的 ResultMap 对象,并返回其对应的id
+   *
+   * @see #resultMapElement
+   * @param context
+   * @param resultMappings
+   * @param enclosingType
+   * @return
+   */
   private String processNestedResultMappings(XNode context, List<ResultMapping> resultMappings, Class<?> enclosingType) {
+    // 必须是 <association>、<collection>、<case> 节点, 并且 select 属性不存在
     if (Arrays.asList("association", "collection", "case").contains(context.getName())
         && context.getStringAttribute("select") == null) {
+      // 校验 <collection> 节点的属性
       validateCollection(context, enclosingType);
+      // 解析 ResultMap 对象(递归)
       ResultMap resultMap = resultMapElement(context, resultMappings, enclosingType);
+      // 返回 ResultMap 的 id
       return resultMap.getId();
     }
     return null;
   }
 
+  /**
+   * 校验 <collection> 节点中 posts 属性是否在类中存在
+   *
+   * @param context
+   * @param enclosingType
+   */
   protected void validateCollection(XNode context, Class<?> enclosingType) {
+    // <collection> 节点
     if ("collection".equals(context.getName()) && context.getStringAttribute("resultMap") == null
         && context.getStringAttribute("javaType") == null) {
       MetaClass metaResultType = MetaClass.forClass(enclosingType, configuration.getReflectorFactory());
+      // 获取 property 属性
       String property = context.getStringAttribute("property");
+      // 判断是否存在对应的 setter 方法
       if (!metaResultType.hasSetter(property)) {
         throw new BuilderException(
             "Ambiguous collection type for property '" + property + "'. You must specify 'javaType' or 'resultMap'.");

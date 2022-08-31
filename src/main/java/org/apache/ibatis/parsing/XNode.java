@@ -268,11 +268,19 @@ public class XNode {
     return children;
   }
 
+  /**
+   * 获取所有子节点中的 name 和 value 属性,并将其封装成 properties
+   *
+   * @return
+   */
   public Properties getChildrenAsProperties() {
     Properties properties = new Properties();
+    // 遍历子节点
     for (XNode child : getChildren()) {
+      // 获取 name 与 value 属性
       String name = child.getStringAttribute("name");
       String value = child.getStringAttribute("value");
+      // 不为空的情况下放入 properties 中
       if (name != null && value != null) {
         properties.setProperty(name, value);
       }

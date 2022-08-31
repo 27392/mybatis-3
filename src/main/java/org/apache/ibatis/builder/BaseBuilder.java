@@ -43,7 +43,7 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public abstract class BaseBuilder {
 
-  // Configuration 对象, Configuration 对象是全局唯一的.
+  // 配置对象, Configuration 对象是全局唯一的
   protected final Configuration configuration;
   // 别名注册器
   protected final TypeAliasRegistry typeAliasRegistry;
@@ -168,7 +168,7 @@ public abstract class BaseBuilder {
   }
 
   /**
-   * 通过别名(或别名)创建对象(使用无参构造),
+   * 通过别名(获取到对应的Class)创建对象(使用无参构造)
    *
    * @param alias
    * @return

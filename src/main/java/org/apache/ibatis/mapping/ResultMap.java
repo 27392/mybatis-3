@@ -32,6 +32,7 @@ import org.apache.ibatis.reflection.ParamNameUtil;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ *
  * @see ResultMapping
  * @author Clinton Begin
  */
@@ -43,23 +44,35 @@ public class ResultMap {
   private String id;
   // type 属性
   private Class<?> type;
-  //
+  // 记录了除 <discriminator> 节点之外的映射关系
   private List<ResultMapping> resultMappings;
+  // 记录了映射关系中带有 ID 标识的映射关系, 例如<id>和<idArg>节点
   private List<ResultMapping> idResultMappings;
+  // 记录了 <constructor> 节点下的映射关系
   private List<ResultMapping> constructorResultMappings;
+  // 记录了非 <constructor> 节点下的映射关系
   private List<ResultMapping> propertyResultMappings;
-  private Set<String> mappedColumns;
-  private Set<String> mappedProperties;
-  private Discriminator discriminator;
-  private boolean hasNestedResultMaps;
-  private boolean hasNestedQueries;
 
+  // 所有的映射的 column 属性. 大写
+  private Set<String> mappedColumns;
+  // 所有的映射的 property 属性
+  private Set<String> mappedProperties;
+
+  // 鉴别器, 对应 <discriminator> 节点
+  private Discriminator discriminator;
+  // 是否存在嵌套结果集(引用其它的 ResultMap), 如果某个映射关系存在 resultMap 属性,且不存在 resultSet 属性则为 true
+  private boolean hasNestedResultMaps;
+  // 是否存在嵌套查询, 如果某个映射关系存在 select 属性, 则为 true
+  private boolean hasNestedQueries;
   // 是否开启自动映射
   private Boolean autoMapping;
 
   private ResultMap() {
   }
 
+  /**
+   * 建造者
+   */
   public static class Builder {
     private static final Log log = LogFactory.getLog(Builder.class);
 
@@ -86,19 +99,32 @@ public class ResultMap {
       return resultMap.type;
     }
 
+    /**
+     * 创建 ResultMap
+     *
+     * @return
+     */
     public ResultMap build() {
+      // id 不存在抛出异常
       if (resultMap.id == null) {
         throw new IllegalArgumentException("ResultMaps must have an id");
       }
+      // 初始化集合属性
       resultMap.mappedColumns = new HashSet<>();
       resultMap.mappedProperties = new HashSet<>();
       resultMap.idResultMappings = new ArrayList<>();
       resultMap.constructorResultMappings = new ArrayList<>();
       resultMap.propertyResultMappings = new ArrayList<>();
       final List<String> constructorArgNames = new ArrayList<>();
+
+      // 遍历 ResultMapping 项
       for (ResultMapping resultMapping : resultMap.resultMappings) {
+        // 标记是否存在嵌套查询 (存在 select 属性)
         resultMap.hasNestedQueries = resultMap.hasNestedQueries || resultMapping.getNestedQueryId() != null;
+        // 标记是否存在嵌套结果集 (存在 select 属性)
         resultMap.hasNestedResultMaps = resultMap.hasNestedResultMaps || (resultMapping.getNestedResultMapId() != null && resultMapping.getResultSet() == null);
+
+        // 处理列名. 将列名转成大写后添加到 mappedColumns 集合中
         final String column = resultMapping.getColumn();
         if (column != null) {
           resultMap.mappedColumns.add(column.toUpperCase(Locale.ENGLISH));
@@ -110,25 +136,34 @@ public class ResultMap {
             }
           }
         }
+
+        // 处理属性. 将属性添加到 mappedProperties 集合中
         final String property = resultMapping.getProperty();
         if (property != null) {
           resultMap.mappedProperties.add(property);
         }
+        // 处理构造参数. 将属性添加到 constructorResultMappings 集合中
         if (resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR)) {
           resultMap.constructorResultMappings.add(resultMapping);
           if (resultMapping.getProperty() != null) {
             constructorArgNames.add(resultMapping.getProperty());
           }
         } else {
+          // 不是构造方法则添加到 propertyResultMappings 集合中
           resultMap.propertyResultMappings.add(resultMapping);
         }
+
+        // 不是构造参数中的 id 属性, 添加到 idResultMappings 集合中
         if (resultMapping.getFlags().contains(ResultFlag.ID)) {
           resultMap.idResultMappings.add(resultMapping);
         }
       }
+      // 如果 idResultMappings 集合为空, 则往其中填充 resultMap resultMappings
       if (resultMap.idResultMappings.isEmpty()) {
         resultMap.idResultMappings.addAll(resultMap.resultMappings);
       }
+
+      // 处理构造函数名称
       if (!constructorArgNames.isEmpty()) {
         final List<String> actualArgNames = argNamesOfMatchingConstructor(constructorArgNames);
         if (actualArgNames == null) {
@@ -143,7 +178,9 @@ public class ResultMap {
           return paramIdx1 - paramIdx2;
         });
       }
+
       // lock down collections
+      // 将集合修改为不可修改类型
       resultMap.resultMappings = Collections.unmodifiableList(resultMap.resultMappings);
       resultMap.idResultMappings = Collections.unmodifiableList(resultMap.idResultMappings);
       resultMap.constructorResultMappings = Collections.unmodifiableList(resultMap.constructorResultMappings);

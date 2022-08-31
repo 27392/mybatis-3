@@ -15,17 +15,22 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 /**
+ * ResultMapping 对象
+ *
+ * 记录了结果集中的一列与 JavaBean 中一个属性之间的映射关系
+ * <resultMap> 节点下除了 <discriminator>子节点的其它子节点,都会被解析成对应的 ResultMapping 对象
+ *
  * @see ResultMap
  * @author Clinton Begin
  */
@@ -34,31 +39,49 @@ public class ResultMapping {
   // Configuration 对象
   private Configuration configuration;
 
-  // 属性名; 对应 property 属性的值
+  // 属性名; 对应 property 属性的值, 表示与改列进行映射的属性
   private String property;
-  // 字段名; 对应 column 属性的值
+  // 字段名; 对应 column 属性的值, 表示的是从数据库中得到的列名或是别名
   private String column;
-  // 属性的 Class; 对应 javaType 属性的值
+  // 属性的 Class; 对应 javaType 属性的值, 一般是 property 属性对应的 Class 类型
   private Class<?> javaType;
-  // jdbc类型; 对应 jdbcType 属性的值
+  // jdbc类型; 对应 jdbcType 属性的值, 表示的是进行映射的列的 JDBC 类型
   private JdbcType jdbcType;
-  // 类型处理器; 对应 typeHandler 属性的值
+  // 类型处理器; 对应 typeHandler 属性的值, 如果指定了会覆盖默认的类型处理器
   private TypeHandler<?> typeHandler;
-  //
+
+  // resultMap 属性; 表示引用了另一个 <resultMap> 节点. (一般只在 <association> 与 <collection> 节点中存在)
+  // <association property="author" column="blog_author_id" javaType="Author" resultMap="authorResult"/>
   private String nestedResultMapId;
+  // select 属性; (只在 <association> 与 <collection> 节点中存在)
+  // <association property="author" column="author_id" javaType="Author" select="selectAuthor"/>
   private String nestedQueryId;
+
+  // notNullColumn 属性使用逗号拆分后的结果
   private Set<String> notNullColumns;
+
+  // columnPrefix 属性
   private String columnPrefix;
+
+  // 构造参数标识(ID, CONSTRUCTOR)
   private List<ResultFlag> flags;
+
+  // column 属性拆分后的结果,
   private List<ResultMapping> composites;
+
+  // resultSet 属性; (处理使用存储过程时存在多结果集)
   private String resultSet;
+  // foreignColumn 属性; (处理使用存储过程时存在多结果集)
   private String foreignColumn;
-  // 是否是延迟加载
+  // 是否是延迟加载; 对应 fetchType 属性的值
   private boolean lazy;
 
   ResultMapping() {
   }
 
+  /**
+   * 建造者
+   */
   public static class Builder {
     private ResultMapping resultMapping = new ResultMapping();
 
@@ -142,15 +165,26 @@ public class ResultMapping {
       return this;
     }
 
+    /**
+     * 创建 ResultMapping
+     *
+     * @return
+     */
     public ResultMapping build() {
       // lock down collections
+      // 将 flags 与 composites 两个集合修改为不可编辑集合
       resultMapping.flags = Collections.unmodifiableList(resultMapping.flags);
       resultMapping.composites = Collections.unmodifiableList(resultMapping.composites);
+      // 解析类型处理器
       resolveTypeHandler();
+      // 校验属性信息
       validate();
       return resultMapping;
     }
 
+    /**
+     * 校验属性信息
+     */
     private void validate() {
       // Issue #697: cannot define both nestedQueryId and nestedResultMapId
       if (resultMapping.nestedQueryId != null && resultMapping.nestedResultMapId != null) {
@@ -179,10 +213,17 @@ public class ResultMapping {
       }
     }
 
+    /**
+     * 解析 TypeHandler
+     *
+     * 处理 存在具体的类型,但是没有指定 TypeHandler 的情况下
+     */
     private void resolveTypeHandler() {
+      // 存在具体类型, 但是没有指定 TypeHandler
       if (resultMapping.typeHandler == null && resultMapping.javaType != null) {
         Configuration configuration = resultMapping.configuration;
         TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
+        // 获取 TypeHandler
         resultMapping.typeHandler = typeHandlerRegistry.getTypeHandler(resultMapping.javaType, resultMapping.jdbcType);
       }
     }

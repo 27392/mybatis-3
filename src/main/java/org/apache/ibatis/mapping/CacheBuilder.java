@@ -121,6 +121,7 @@ public class CacheBuilder {
       // 设置 MyBatis 默认的装饰器
       cache = setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
+      // 如果不是 LoggingCache 的话, 则使用 LoggingCache 对其进行包装
       cache = new LoggingCache(cache);
     }
     return cache;

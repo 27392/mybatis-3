@@ -54,7 +54,15 @@ import org.apache.ibatis.type.TypeHandler;
  *
  * 主要负责在Mapper.xml 映射配置文件中,出现的所有元素进行构建
  *
- * 类主要有 MappedStatement、Cache、ParameterMap、ParameterMapping、ResultMap、ResultMapping、Discriminator
+ * 类主要有 MappedStatement、Cache、ResultMap、ResultMapping、Discriminator、ParameterMap、ParameterMapping、
+ *
+ * @see #useNewCache(Class, Class, Long, Integer, boolean, boolean, Properties)
+ * @see #useCacheRef(String)
+ *
+ * @see #buildResultMapping(Class, String, String, Class, JdbcType, String, String, String, String, Class, List, String, String, boolean)
+ * @see #buildResultMapping(Class, String, String, Class, JdbcType, String, String, String, String, Class, List)
+ *
+ * @see #addResultMap(String, Class, String, Discriminator, List, Boolean)
  *
  * @author Clinton Begin
  */
@@ -86,6 +94,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
   /**
    * 设置 namespace 属性
+   *
    * @param currentNamespace
    */
   public void setCurrentNamespace(String currentNamespace) {
@@ -101,6 +110,13 @@ public class MapperBuilderAssistant extends BaseBuilder {
     this.currentNamespace = currentNamespace;
   }
 
+  /**
+   * 使用当前的 namespace
+   *
+   * @param base
+   * @param isReference
+   * @return
+   */
   public String applyCurrentNamespace(String base, boolean isReference) {
     if (base == null) {
       return null;
@@ -220,6 +236,17 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .build();
   }
 
+  /**
+   * 创建 ResultMap 对象
+   *
+   * @param id
+   * @param type
+   * @param extend
+   * @param discriminator
+   * @param resultMappings
+   * @param autoMapping
+   * @return
+   */
   public ResultMap addResultMap(
       String id,
       Class<?> type,
@@ -227,16 +254,24 @@ public class MapperBuilderAssistant extends BaseBuilder {
       Discriminator discriminator,
       List<ResultMapping> resultMappings,
       Boolean autoMapping) {
+    // id = namespace.id
     id = applyCurrentNamespace(id, false);
+    // extend = namespace.extend
     extend = applyCurrentNamespace(extend, true);
 
+    // 处理继承关系
     if (extend != null) {
+      // 不存在被继承的 ResultMap, 抛出异常
       if (!configuration.hasResultMap(extend)) {
         throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
       }
+      // 获取父 ResultMap
       ResultMap resultMap = configuration.getResultMap(extend);
+      // 删除与父 ResultMap 重复的 ResultMapping
       List<ResultMapping> extendedResultMappings = new ArrayList<>(resultMap.getResultMappings());
       extendedResultMappings.removeAll(resultMappings);
+
+      // 如果当前定义了 <constructor> 节点,则需要将父 ResultMap 的 ResultMapping 删除
       // Remove parent constructor if this resultMap declares a constructor.
       boolean declaresConstructor = false;
       for (ResultMapping resultMapping : resultMappings) {
@@ -248,12 +283,16 @@ public class MapperBuilderAssistant extends BaseBuilder {
       if (declaresConstructor) {
         extendedResultMappings.removeIf(resultMapping -> resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR));
       }
+      // 添加需要被继承的 ResultMapping
       resultMappings.addAll(extendedResultMappings);
     }
+    // 创建 ResultMap 对象
     ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
         .discriminator(discriminator)
         .build();
+    // 将 ResultMap 对象保
     configuration.addResultMap(resultMap);
+    // 返回 ResultMap
     return resultMap;
   }
 
@@ -455,6 +494,25 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return resultMaps;
   }
 
+  /**
+   * 创建 ResultMapping 对象
+   *
+   * @param resultType
+   * @param property
+   * @param column
+   * @param javaType
+   * @param jdbcType
+   * @param nestedSelect
+   * @param nestedResultMap
+   * @param notNullColumn
+   * @param columnPrefix
+   * @param typeHandler
+   * @param flags
+   * @param resultSet
+   * @param foreignColumn
+   * @param lazy
+   * @return
+   */
   public ResultMapping buildResultMapping(
       Class<?> resultType,
       String property,
@@ -470,14 +528,24 @@ public class MapperBuilderAssistant extends BaseBuilder {
       String resultSet,
       String foreignColumn,
       boolean lazy) {
+
+    // 根据 property 属性值解析出对应的 Class 类型
     Class<?> javaTypeClass = resolveResultJavaType(resultType, property, javaType);
+
+    // 获取属性对应的类型处理器
     TypeHandler<?> typeHandlerInstance = resolveTypeHandler(javaTypeClass, typeHandler);
+
+    // 如果嵌套 select 查询, 并且设置 foreignColumn 参数
     List<ResultMapping> composites;
     if ((nestedSelect == null || nestedSelect.isEmpty()) && (foreignColumn == null || foreignColumn.isEmpty())) {
       composites = Collections.emptyList();
     } else {
+      // 解析传递的参数是否是多个
+      // 注意：在使用复合主键的时候，你可以使用 column="{prop1=col1,prop2=col2}" 这样的语法来指定多个传递给嵌套 Select 查询语句的列名。这会使得 prop1 和 prop2 作为参数对象，被设置为对应嵌套 Select 语句的参数。
+      // https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E5%85%B3%E8%81%94%E7%9A%84%E5%B5%8C%E5%A5%97-select-%E6%9F%A5%E8%AF%A2
       composites = parseCompositeColumnName(column);
     }
+    // 创建 ResultMapping 对象
     return new ResultMapping.Builder(configuration, property, column, javaTypeClass)
         .jdbcType(jdbcType)
         .nestedQueryId(applyCurrentNamespace(nestedSelect, true))
@@ -541,6 +609,14 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return configuration.getLanguageDriver(langClass);
   }
 
+  /**
+   * 将 notNullColumn 属性解析成多个
+   *
+   * {child_id, child_name}
+   *
+   * @param columnName
+   * @return
+   */
   private Set<String> parseMultipleColumnNames(String columnName) {
     Set<String> columns = new HashSet<>();
     if (columnName != null) {
@@ -557,6 +633,14 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return columns;
   }
 
+  /**
+   * 解析多列名
+   *
+   * column="{prop1=col1,prop2=col2}"
+   *
+   * @param columnName
+   * @return
+   */
   private List<ResultMapping> parseCompositeColumnName(String columnName) {
     List<ResultMapping> composites = new ArrayList<>();
     if (columnName != null && (columnName.indexOf('=') > -1 || columnName.indexOf(',') > -1)) {
@@ -572,9 +656,19 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return composites;
   }
 
+  /**
+   * 解析 ResultMapping 的 property 属性类型
+   *
+   * @param resultType  ResultMap 的类型
+   * @param property    属性
+   * @param javaType    属性的 Class 类型
+   * @return
+   */
   private Class<?> resolveResultJavaType(Class<?> resultType, String property, Class<?> javaType) {
+    // 如果属性类型为空, 属性不为空. 尝试从 <ResultMap> 节点的 type 属性类型中获取
     if (javaType == null && property != null) {
       try {
+        // 获取属性在. <ResultMap> 节点的 type 属性类型中的对应的类型
         MetaClass metaResultType = MetaClass.forClass(resultType, configuration.getReflectorFactory());
         javaType = metaResultType.getSetterType(property);
       } catch (Exception e) {
