@@ -32,6 +32,9 @@ import org.apache.ibatis.reflection.ParamNameUtil;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 结果映射
+ *
+ * 负责将 JDBC 的结果集映射到 JavaBean 中
  *
  * @see ResultMapping
  * @author Clinton Begin
