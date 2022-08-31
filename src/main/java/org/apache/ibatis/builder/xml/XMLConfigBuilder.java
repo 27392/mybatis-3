@@ -58,9 +58,9 @@ import org.apache.ibatis.type.JdbcType;
  */
 public class XMLConfigBuilder extends BaseBuilder {
 
-  // 是否解析过配置文件
+  // 是否解析过配置文件的标识
   private boolean parsed;
-  // xpath 对象
+  // XPathParser 对象
   private final XPathParser parser;
   // 环境的名称
   private String environment;
@@ -76,6 +76,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   public XMLConfigBuilder(Reader reader, String environment, Properties props) {
+    // 创建 XPathParser 对象并调用重载方法
     this(new XPathParser(reader, true, props, new XMLMapperEntityResolver()), environment, props);
   }
 
@@ -99,7 +100,7 @@ public class XMLConfigBuilder extends BaseBuilder {
    * @param props
    */
   private XMLConfigBuilder(XPathParser parser, String environment, Properties props) {
-    // 创建 Configuration 对象并调用父类构造方法
+    // 创建 Configuration 对象并调用父类(BaseBuilder)构造方法
     super(new Configuration());
     ErrorContext.instance().resource("SQL Mapper Configuration");
     // 将环境变量放到 Configuration 中
@@ -489,7 +490,7 @@ public class XMLConfigBuilder extends BaseBuilder {
    */
   private void environmentsElement(XNode context) throws Exception {
     if (context != null) {
-      // 初始化时未指定 environment 属性, 则将值设置为 default
+      // 初始化时未指定 environment 属性, 则获取 default 属性
       if (environment == null) {
         environment = context.getStringAttribute("default");
       }
@@ -689,7 +690,7 @@ public class XMLConfigBuilder extends BaseBuilder {
         if ("package".equals(child.getName())) {
           // 获取 name 属性. 包名
           String mapperPackage = child.getStringAttribute("name");
-          // 使用 MapperRegistry 扫描包并注册 Mapper 接口
+          // 使用 MapperRegistry 扫描包并注册 Mapper 接口; 最终都会调用 XMLMapperBuilder 来解析
           configuration.addMappers(mapperPackage);
         } else {
           // 处理 <mapper> 节点
@@ -725,7 +726,7 @@ public class XMLConfigBuilder extends BaseBuilder {
 
             // 解析 Class 对象, 使用 class 属性的值
             Class<?> mapperInterface = Resources.classForName(mapperClass);
-            // 注册 Mapper 接口. 使用 MapperRegistry 对象
+            // 注册 Mapper 接口. 使用 MapperRegistry 对象; 最终都会调用 XMLMapperBuilder 来解析
             configuration.addMapper(mapperInterface);
           } else {
             throw new BuilderException("A mapper element may only specify a url, resource or class, but not more than one.");
@@ -738,10 +739,11 @@ public class XMLConfigBuilder extends BaseBuilder {
   /**
    * 环境是否与指定的环境一致
    *
-   * @param id
+   * @param id  指定的环境
    * @return
    */
   private boolean isSpecifiedEnvironment(String id) {
+    // 环境为空抛出异常
     if (environment == null) {
       throw new BuilderException("No environment specified.");
     }

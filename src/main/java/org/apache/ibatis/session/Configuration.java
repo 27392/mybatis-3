@@ -103,7 +103,14 @@ public class Configuration {
   // 环境对象 (包含事务工厂, 数据源)
   protected Environment environment;
 
+  /**
+   * 是否允许在嵌套语句中使用分页（RowBounds）。如果允许使用则设置为 false。
+   */
   protected boolean safeRowBoundsEnabled;
+
+  /**
+   * 是否允许在嵌套语句中使用结果处理器（ResultHandler）。如果允许使用则设置为 false。
+   */
   protected boolean safeResultHandlerEnabled = true;
   protected boolean mapUnderscoreToCamelCase;
 
@@ -150,9 +157,7 @@ public class Configuration {
   // 对象包装工厂 (主要负责创建 ObjectWrapper 对象)
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
-  /**
-   * [延迟加载] 延迟加载的全局开关。当开启时，所有关联对象都会延迟加载。 特定关联关系中可通过设置 fetchType 属性来覆盖该项的开关状态。
-   */
+  // 延迟加载的全局开关。当开启时，所有关联对象都会延迟加载。 特定关联关系中可通过设置 fetchType 属性来覆盖该项的开关状态。
   protected boolean lazyLoadingEnabled = false;
 
   /**
@@ -160,7 +165,7 @@ public class Configuration {
    */
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
-  // 数据库 ID
+  // 当前使用的数据库 ID
   protected String databaseId;
 
   /**
@@ -171,6 +176,7 @@ public class Configuration {
    */
   protected Class<?> configurationFactory;
 
+  // Mapper 注册器
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
   // 拦截器链(包含了多个拦截器信息)
   protected final InterceptorChain interceptorChain = new InterceptorChain();
@@ -183,7 +189,9 @@ public class Configuration {
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+  // 缓存映射 (key: namespace)
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
+  // ResultMap 映射 (key: )
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
@@ -880,24 +888,51 @@ public class Configuration {
     return caches.containsKey(id);
   }
 
+  /**
+   * 添加 ResultMap
+   *
+   * @param rm
+   */
   public void addResultMap(ResultMap rm) {
     resultMaps.put(rm.getId(), rm);
     checkLocallyForDiscriminatedNestedResultMaps(rm);
     checkGloballyForDiscriminatedNestedResultMaps(rm);
   }
 
+  /**
+   * 获取所有的 ResultMap 的 id
+   *
+   * @return
+   */
   public Collection<String> getResultMapNames() {
     return resultMaps.keySet();
   }
 
+  /**
+   * 获取所有的 ResultMap
+   *
+   * @return
+   */
   public Collection<ResultMap> getResultMaps() {
     return resultMaps.values();
   }
 
+  /**
+   * 获取 ResultMap
+   *
+   * @param id
+   * @return
+   */
   public ResultMap getResultMap(String id) {
     return resultMaps.get(id);
   }
 
+  /**
+   * ResultMap 是否存在
+   *
+   * @param id
+   * @return
+   */
   public boolean hasResultMap(String id) {
     return resultMaps.containsKey(id);
   }
@@ -1013,6 +1048,7 @@ public class Configuration {
 
   /**
    * 添加单个 Mapper 接口
+   *
    * @param type
    * @param <T>
    */
@@ -1034,6 +1070,7 @@ public class Configuration {
 
   /**
    * 是否存在 Mapper 接口
+   *
    * @param type
    * @return
    */
