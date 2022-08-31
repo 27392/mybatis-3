@@ -191,7 +191,7 @@ public class Configuration {
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
   // 缓存映射 (key: namespace)
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
-  // ResultMap 映射 (key: )
+  // ResultMap 映射 (key: namespace.id)
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
@@ -200,9 +200,11 @@ public class Configuration {
   protected final Set<String> loadedResources = new HashSet<>();
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
+  // 解析失败的 XMLStatementBuilder 对象集合
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
   // 引用缓存失败的对象集合
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
+  // 创建 ResultMap 失败的对象集合
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 

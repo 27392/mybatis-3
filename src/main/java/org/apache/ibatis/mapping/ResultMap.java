@@ -41,7 +41,7 @@ import org.apache.ibatis.session.Configuration;
  */
 public class ResultMap {
 
-  // Configuration 对像
+  // Configuration 对象
   private Configuration configuration;
 
   // id 属性

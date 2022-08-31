@@ -290,7 +290,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
     ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
         .discriminator(discriminator)
         .build();
-    // 将 ResultMap 对象保
+    // 将 ResultMap 对象保存到 Configuration 中的 `Map<String, ResultMap> resultMaps` 属性中其 key (namespace.id), value 为 ResultMap 对象
     configuration.addResultMap(resultMap);
     // 返回 ResultMap
     return resultMap;

@@ -118,9 +118,11 @@ public class XMLMapperBuilder extends BaseBuilder {
       configurationElement(parser.evalNode("/mapper"));
       // 将资源保存到 Configuration 中, 以防重复加载
       configuration.addLoadedResource(resource);
+      //
       bindMapperForNamespace();
     }
 
+    // 处理解析失败的集合
     parsePendingResultMaps();
     parsePendingCacheRefs();
     parsePendingStatements();
@@ -199,19 +201,34 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析 <select>、<insert>、<update>、<delete> 等节点
+   *
+   * @param list
+   */
   private void buildStatementFromContext(List<XNode> list) {
+    // 是否配置 databaseId
     if (configuration.getDatabaseId() != null) {
       buildStatementFromContext(list, configuration.getDatabaseId());
     }
     buildStatementFromContext(list, null);
   }
 
+  /**
+   * 解析 <select>、<insert>、<update>、<delete> 等节点
+   *
+   * @param list
+   * @param requiredDatabaseId
+   */
   private void buildStatementFromContext(List<XNode> list, String requiredDatabaseId) {
     for (XNode context : list) {
+      // 创建 XMLStatementBuilder 对象
       final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
       try {
+        // 解析
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
+        // 解析失败将 XMLStatementBuilder 对象保存到 Configuration 中
         configuration.addIncompleteStatement(statementParser);
       }
     }
@@ -489,9 +506,10 @@ public class XMLMapperBuilder extends BaseBuilder {
     // 创建 ResultMapResolver 解析对象
     ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
     try {
-      // 使用 ResultMapResolver 创建 ResultMap 对象
+      // 使用 ResultMapResolver 创建 ResultMap 对象. 并添加到 Configuration 中
       return resultMapResolver.resolve();
     } catch (IncompleteElementException e) {
+      // 创建失败, 将 ResultMapResolver 对象保存到 Configuration 中
       configuration.addIncompleteResultMap(resultMapResolver);
       throw e;
     }
@@ -576,31 +594,61 @@ public class XMLMapperBuilder extends BaseBuilder {
     return builderAssistant.buildDiscriminator(resultType, column, javaTypeClass, jdbcTypeEnum, typeHandlerClass, discriminatorMap);
   }
 
+  /**
+   * 解析 <sql> 节点
+   *
+   * @param list
+   */
   private void sqlElement(List<XNode> list) {
+    // 是否配置 databaseId
     if (configuration.getDatabaseId() != null) {
       sqlElement(list, configuration.getDatabaseId());
     }
     sqlElement(list, null);
   }
 
+  /**
+   * 解析 <sql> 节点
+   *
+   * <sql id="userColumns" database="mysql"> column1, column2, column3 </sql>
+   *
+   * @param list
+   * @param requiredDatabaseId  databaseId
+   */
   private void sqlElement(List<XNode> list, String requiredDatabaseId) {
+    // 遍历
     for (XNode context : list) {
+      // 获取 databaseId 与 id 属性
       String databaseId = context.getStringAttribute("databaseId");
       String id = context.getStringAttribute("id");
+      // id = namespace.id
       id = builderAssistant.applyCurrentNamespace(id, false);
+
+      // databaseId 属性是否与配置的 databaseId 相等
       if (databaseIdMatchesCurrent(id, databaseId, requiredDatabaseId)) {
+        // 放入 sqlFragments 字段中 (key: 是id, value: XNode对象)
         sqlFragments.put(id, context);
       }
     }
   }
 
+  /**
+   * 匹配 databaseId
+   *
+   * @param id
+   * @param databaseId          节点中的 databaseId 属性
+   * @param requiredDatabaseId  配置的 databaseId
+   * @return
+   */
   private boolean databaseIdMatchesCurrent(String id, String databaseId, String requiredDatabaseId) {
+    // 配置的 databaseId 属性不为空的情况下进行比较
     if (requiredDatabaseId != null) {
       return requiredDatabaseId.equals(databaseId);
     }
     if (databaseId != null) {
       return false;
     }
+    // 不存在的情况返回 true
     if (!this.sqlFragments.containsKey(id)) {
       return true;
     }
