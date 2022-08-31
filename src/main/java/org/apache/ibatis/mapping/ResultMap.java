@@ -37,6 +37,7 @@ import org.apache.ibatis.session.Configuration;
  * @author Clinton Begin
  */
 public class ResultMap {
+
   // Configuration 对像
   private Configuration configuration;
 
@@ -165,6 +166,7 @@ public class ResultMap {
 
       // 处理构造函数名称
       if (!constructorArgNames.isEmpty()) {
+        // 获取匹配后的构造参数名称
         final List<String> actualArgNames = argNamesOfMatchingConstructor(constructorArgNames);
         if (actualArgNames == null) {
           throw new BuilderException("Error in result map '" + resultMap.id
@@ -172,6 +174,7 @@ public class ResultMap {
               + resultMap.getType().getName() + "' by arg names " + constructorArgNames
               + ". There might be more info in debug log.");
         }
+        // 将配置的顺序根据获取到的参数名称进行排序.
         resultMap.constructorResultMappings.sort((o1, o2) -> {
           int paramIdx1 = actualArgNames.indexOf(o1.getProperty());
           int paramIdx2 = actualArgNames.indexOf(o2.getProperty());
@@ -189,12 +192,21 @@ public class ResultMap {
       return resultMap;
     }
 
+    /**
+     * 匹配构造函数参数名称
+     *
+     * @param constructorArgNames
+     * @return
+     */
     private List<String> argNamesOfMatchingConstructor(List<String> constructorArgNames) {
+      // 获取构造函数列表
       Constructor<?>[] constructors = resultMap.type.getDeclaredConstructors();
       for (Constructor<?> constructor : constructors) {
         Class<?>[] paramTypes = constructor.getParameterTypes();
         if (constructorArgNames.size() == paramTypes.length) {
+          // 获取构造函数的参数名称
           List<String> paramNames = getArgNames(constructor);
+          // 与传入的参数名完全匹配, 并且类型完全匹配
           if (constructorArgNames.containsAll(paramNames)
               && argTypesMatch(constructorArgNames, paramTypes, paramNames)) {
             return paramNames;
@@ -204,11 +216,22 @@ public class ResultMap {
       return null;
     }
 
+    /**
+     * 构造函数类型匹配
+     *
+     * @param constructorArgNames
+     * @param paramTypes
+     * @param paramNames
+     * @return
+     */
     private boolean argTypesMatch(final List<String> constructorArgNames,
         Class<?>[] paramTypes, List<String> paramNames) {
       for (int i = 0; i < constructorArgNames.size(); i++) {
+        // 获取构造函数中参数类型
         Class<?> actualType = paramTypes[paramNames.indexOf(constructorArgNames.get(i))];
+        // 获取配置的类型
         Class<?> specifiedType = resultMap.constructorResultMappings.get(i).getJavaType();
+        // 类型不相同则抛出异常
         if (!actualType.equals(specifiedType)) {
           if (log.isDebugEnabled()) {
             log.debug("While building result map '" + resultMap.id
@@ -223,27 +246,42 @@ public class ResultMap {
       return true;
     }
 
+    /**
+     * 获取构造函数的参数名称
+     *
+     * @param constructor
+     * @return
+     */
     private List<String> getArgNames(Constructor<?> constructor) {
       List<String> paramNames = new ArrayList<>();
       List<String> actualParamNames = null;
+      // 获取构造函数参数中的注解信息
       final Annotation[][] paramAnnotations = constructor.getParameterAnnotations();
       int paramCount = paramAnnotations.length;
+
+      // 遍历参数
       for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
         String name = null;
+        // 查找 @Param 注解,获取对应的参数名称
         for (Annotation annotation : paramAnnotations[paramIndex]) {
           if (annotation instanceof Param) {
             name = ((Param) annotation).value();
             break;
           }
         }
+
+        // 不存在注解信息
         if (name == null && resultMap.configuration.isUseActualParamName()) {
+          // 获取构造器参数的名称
           if (actualParamNames == null) {
             actualParamNames = ParamNameUtil.getParamNames(constructor);
           }
+          // 获取参数名称
           if (actualParamNames.size() > paramIndex) {
             name = actualParamNames.get(paramIndex);
           }
         }
+        // 保存解析后的参数
         paramNames.add(name != null ? name : "arg" + paramIndex);
       }
       return paramNames;
