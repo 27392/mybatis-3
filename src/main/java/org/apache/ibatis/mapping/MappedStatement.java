@@ -29,7 +29,7 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
- * MappedStatement 对象 包含了SQL语句节点中的所有属性
+ * MappedStatement 对象包含了SQL语句节点中的所有属性
  *
  * @author Clinton Begin
  */
@@ -49,7 +49,7 @@ public final class MappedStatement {
   private StatementType statementType;
   // resultSetType 属性
   private ResultSetType resultSetType;
-  // TODO
+  // SqlSource 对象(使用它可以创建 BoundSql)
   private SqlSource sqlSource;
   // 缓存
   private Cache cache;

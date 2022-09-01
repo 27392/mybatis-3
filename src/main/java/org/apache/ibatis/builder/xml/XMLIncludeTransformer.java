@@ -33,6 +33,7 @@ import org.w3c.dom.NodeList;
 /**
  * XMLIncludeTransformer 负责解析 <include> 并将解析后的属性设置回SQL语句节点中
  *
+ * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#sql}
  * @author Frank D. Martinez [mnesarco]
  */
 public class XMLIncludeTransformer {

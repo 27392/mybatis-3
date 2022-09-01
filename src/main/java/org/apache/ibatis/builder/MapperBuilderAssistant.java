@@ -54,7 +54,7 @@ import org.apache.ibatis.type.TypeHandler;
  *
  * 主要负责在Mapper.xml 映射配置文件中,出现的所有元素进行构建
  *
- * 类主要有 MappedStatement、Cache、ResultMap、ResultMapping、Discriminator、ParameterMap、ParameterMapping、
+ * 类主要有 MappedStatement、Cache、ResultMap、ResultMapping、Discriminator、ParameterMap、ParameterMapping、MappedStatement
  *
  * @see #useNewCache(Class, Class, Long, Integer, boolean, boolean, Properties)
  * @see #useCacheRef(String)
