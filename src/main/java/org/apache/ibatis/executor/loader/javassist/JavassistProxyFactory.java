@@ -124,6 +124,7 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
     }
 
     public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+      // 目标类class
       final Class<?> type = target.getClass();
 
       // [延迟加载] 创建MethodHandler对象
@@ -181,6 +182,7 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
             }
           }
         }
+        // 继续执行方法
         return methodProxy.invoke(enhanced, args);
       } catch (Throwable t) {
         throw ExceptionUtil.unwrapThrowable(t);

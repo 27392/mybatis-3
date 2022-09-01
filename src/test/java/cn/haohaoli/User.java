@@ -1,8 +1,10 @@
 package cn.haohaoli;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -12,6 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class User {
 
   private Integer id;
@@ -20,4 +23,8 @@ public class User {
 
   private List<Order> orderList;
 
+  public User(@Param("id") Integer id, @Param("name") String name) {
+    this.id = id;
+    this.name = name;
+  }
 }

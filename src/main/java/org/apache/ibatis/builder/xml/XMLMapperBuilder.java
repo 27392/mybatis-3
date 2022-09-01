@@ -130,6 +130,12 @@ public class XMLMapperBuilder extends BaseBuilder {
     parsePendingStatements();
   }
 
+  /**
+   * 获取 sql 片段
+   *
+   * @param refid
+   * @return
+   */
   public XNode getSqlFragment(String refid) {
     return sqlFragments.get(refid);
   }
@@ -224,14 +230,14 @@ public class XMLMapperBuilder extends BaseBuilder {
    * @param requiredDatabaseId
    */
   private void buildStatementFromContext(List<XNode> list, String requiredDatabaseId) {
+    // 遍历所有节点
     for (XNode context : list) {
       // 创建 XMLStatementBuilder 对象
       final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
       try {
-        // 开始解析节点
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
-        // 解析失败(应该是被引用的缓存还为找到)将 XMLStatementBuilder 对象保存到 Configuration 中
+        // 解析失败(应该是被引用的缓存、SQL 片段、ResultMap等对象未找到)将 XMLStatementBuilder 对象保存到 Configuration 中
         configuration.addIncompleteStatement(statementParser);
       }
     }
@@ -635,7 +641,7 @@ public class XMLMapperBuilder extends BaseBuilder {
    * @param requiredDatabaseId  databaseId
    */
   private void sqlElement(List<XNode> list, String requiredDatabaseId) {
-    // 遍历
+    // 遍历所有节点
     for (XNode context : list) {
       // 获取 databaseId 与 id 属性
       String databaseId = context.getStringAttribute("databaseId");
@@ -643,7 +649,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       // id = namespace.id
       id = builderAssistant.applyCurrentNamespace(id, false);
 
-      // databaseId 属性是否与配置的 databaseId 相等
+      // databaseId 属性是否与 Configuration 中的 databaseId 相等
       if (databaseIdMatchesCurrent(id, databaseId, requiredDatabaseId)) {
         // 放入 sqlFragments 字段中 (key: 是id, value: XNode对象)
         sqlFragments.put(id, context);
@@ -656,11 +662,11 @@ public class XMLMapperBuilder extends BaseBuilder {
    *
    * @param id
    * @param databaseId          节点中的 databaseId 属性
-   * @param requiredDatabaseId  配置的 databaseId
+   * @param requiredDatabaseId  Configuration 中的 databaseId
    * @return
    */
   private boolean databaseIdMatchesCurrent(String id, String databaseId, String requiredDatabaseId) {
-    // 配置的 databaseId 属性不为空的情况下进行比较
+    // Configuration 中的 databaseId 属性不为空的情况下进行比较
     if (requiredDatabaseId != null) {
       return requiredDatabaseId.equals(databaseId);
     }

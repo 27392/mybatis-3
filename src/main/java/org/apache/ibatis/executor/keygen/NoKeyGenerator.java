@@ -21,6 +21,8 @@ import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
 
 /**
+ * 空的主键生成器实现
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */

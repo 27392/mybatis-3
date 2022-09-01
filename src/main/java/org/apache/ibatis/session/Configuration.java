@@ -186,6 +186,7 @@ public class Configuration {
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
+  // SQL语句节点信息映射 (key: namespace.id)
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
@@ -194,6 +195,7 @@ public class Configuration {
   // ResultMap 映射 (key: namespace.id)
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
+  // 主键生成器 映射 (key: namespace.id + !selectKey)
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
   // 已加载的资源列表 (用来判断是否重复加载)
@@ -830,22 +832,50 @@ public class Configuration {
     return executor;
   }
 
+  /**
+   * 添加主键生成器
+   *
+   * @param id
+   * @param keyGenerator
+   */
   public void addKeyGenerator(String id, KeyGenerator keyGenerator) {
     keyGenerators.put(id, keyGenerator);
   }
 
+  /**
+   * 获取所有主键生成器的 id
+   *
+   * @return
+   */
   public Collection<String> getKeyGeneratorNames() {
     return keyGenerators.keySet();
   }
 
+  /**
+   * 获取所有主键生成器
+   *
+   * @return
+   */
   public Collection<KeyGenerator> getKeyGenerators() {
     return keyGenerators.values();
   }
 
+  /**
+   * 获取主键生成器
+   *
+   * @param id
+   * @return
+   */
   public KeyGenerator getKeyGenerator(String id) {
     return keyGenerators.get(id);
   }
 
+  /**
+   * 是否存在主键生成器
+   *
+   * @param id
+   * @return
+   */
   public boolean hasKeyGenerator(String id) {
     return keyGenerators.containsKey(id);
   }
@@ -967,15 +997,30 @@ public class Configuration {
     return parameterMaps.containsKey(id);
   }
 
+  /**
+   * 添加 MappedStatement 对象
+   *
+   * @param ms
+   */
   public void addMappedStatement(MappedStatement ms) {
     mappedStatements.put(ms.getId(), ms);
   }
 
+  /**
+   * 获取所有 MappedStatement 的名称
+   *
+   * @return
+   */
   public Collection<String> getMappedStatementNames() {
     buildAllStatements();
     return mappedStatements.keySet();
   }
 
+  /**
+   * 获取所有的 MappedStatement 对象
+   *
+   * @return
+   */
   public Collection<MappedStatement> getMappedStatements() {
     buildAllStatements();
     return mappedStatements.values();
@@ -1043,11 +1088,25 @@ public class Configuration {
     return incompleteMethods;
   }
 
+  /**
+   * 获取 MappedStatement, 并处理 incomplete* 集合
+   *
+   * @param id
+   * @return
+   */
   public MappedStatement getMappedStatement(String id) {
     return this.getMappedStatement(id, true);
   }
 
+  /**
+   * 添加 MappedStatement
+   *
+   * @param id
+   * @param validateIncompleteStatements 是否需要加载 incomplete* 集合
+   * @return
+   */
   public MappedStatement getMappedStatement(String id, boolean validateIncompleteStatements) {
+    // 是否需要加载 incomplete* 集合
     if (validateIncompleteStatements) {
       buildAllStatements();
     }
@@ -1057,6 +1116,7 @@ public class Configuration {
   /**
    * 获取 sql 片段, <sql> 节点
    *
+   * @see org.apache.ibatis.builder.xml.XMLMapperBuilder#sqlElement(List, String)
    * @return
    */
   public Map<String, XNode> getSqlFragments() {
@@ -1123,10 +1183,23 @@ public class Configuration {
     return mapperRegistry.hasMapper(type);
   }
 
+  /**
+   * 是否存在 MappedStatement, 并处理 incomplete* 集合
+   *
+   * @param statementName
+   * @return
+   */
   public boolean hasStatement(String statementName) {
     return hasStatement(statementName, true);
   }
 
+  /**
+   * 是否存在 MappedStatement
+   *
+   * @param statementName
+   * @param validateIncompleteStatements  是否需要加载 incomplete* 集合
+   * @return
+   */
   public boolean hasStatement(String statementName, boolean validateIncompleteStatements) {
     if (validateIncompleteStatements) {
       buildAllStatements();
@@ -1134,6 +1207,12 @@ public class Configuration {
     return mappedStatements.containsKey(statementName);
   }
 
+  /**
+   * 添加缓存引用
+   *
+   * @param namespace
+   * @param referencedNamespace
+   */
   public void addCacheRef(String namespace, String referencedNamespace) {
     cacheRefMap.put(namespace, referencedNamespace);
   }

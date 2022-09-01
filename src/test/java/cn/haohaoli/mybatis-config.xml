@@ -5,6 +5,10 @@
 
 <configuration>
 
+    <properties>
+      <property name="u" value="user"/>
+    </properties>
+
     <settings>
         <setting name="logImpl" value="org.apache.ibatis.logging.stdout.StdOutImpl"/>
         <setting name="lazyLoadingEnabled" value="true"/>

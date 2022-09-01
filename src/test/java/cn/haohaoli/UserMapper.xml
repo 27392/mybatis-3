@@ -5,6 +5,11 @@
 
 <mapper namespace="cn.haohaoli.UserMapper">
 
+    <cache blocking="true"  />
+
+    <sql id="all"> *, ${u},${x}</sql>
+
+  <sql id="xing"> * </sql>
     <resultMap id="BaseResultMap" type="cn.haohaoli.User">
       <id property="id" column="id" />
       <result property="age" column="age"/>
@@ -13,11 +18,38 @@
           property="orderList"
           ofType="cn.haohaoli.Order"
           select="cn.haohaoli.OrderMapper.getByUserId"
-          column="id" fetchType="lazy" />
+          column="id" />
     </resultMap>
 
+    <resultMap id="constructor_BaseResultMap" type="cn.haohaoli.User">
+      <constructor>
+        <idArg name="id" column="id"/>
+        <arg name="name" column="name"/>
+      </constructor>
+      <result property="age" column="age"/>
+    </resultMap>
+
+  <insert id="save">
+    <selectKey keyProperty="id" keyColumn="c" >
+      select count(1) as c from user
+    </selectKey>
+    insert into user (id,`name`,age)
+  </insert>
+
     <select id="getById" resultMap="BaseResultMap" parameterType="int">
-        select * from user where id = #{p0}
+        select
+            <include refid="all">
+                <property name="x" value="${u}"/>
+            </include>
+        from user where id = #{p0}
     </select>
+
+    <select id="selectList" resultMap="BaseResultMap" statementType="STATEMENT">
+        select * from user limit 2
+    </select>
+
+    <update id="updateById">
+        update user set age = #{param1} where id = #{param2}
+    </update>
 
 </mapper>

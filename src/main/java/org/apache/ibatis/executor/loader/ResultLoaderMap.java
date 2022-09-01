@@ -202,7 +202,7 @@ public class ResultLoaderMap {
         }
 
         final Configuration config = this.getConfiguration();
-        // 获取到延迟属性的
+        // 获取到延迟属性的 MappedStatement
         final MappedStatement ms = config.getMappedStatement(this.mappedStatement);
         if (ms == null) {
           throw new ExecutorException("Cannot lazy load property [" + this.property

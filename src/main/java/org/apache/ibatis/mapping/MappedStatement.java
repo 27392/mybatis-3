@@ -29,32 +29,57 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * MappedStatement 对象 包含了SQL语句节点中的所有属性
+ *
  * @author Clinton Begin
  */
 public final class MappedStatement {
 
+  // 当前映射文件的资源地址
   private String resource;
+  // Configuration
   private Configuration configuration;
+  // id 属性
   private String id;
+  // fetchSize 属性
   private Integer fetchSize;
+  // timeout 属性
   private Integer timeout;
+  // JDBC Statement 类型
   private StatementType statementType;
+  // resultSetType 属性
   private ResultSetType resultSetType;
+  // TODO
   private SqlSource sqlSource;
+  // 缓存
   private Cache cache;
+  // parameterMap 属性对应的 ParameterMap 对象
   private ParameterMap parameterMap;
+  // resultMap 属性对应的 ResultMap 对象
   private List<ResultMap> resultMaps;
+  // flushCache 属性. 是否需要清空一二级缓存
   private boolean flushCacheRequired;
+  // useCache 属性. 是否使用二级缓存
   private boolean useCache;
+  // resultOrdered 属性
   private boolean resultOrdered;
+  // SQL 语句类型
   private SqlCommandType sqlCommandType;
+  // <selectKey> 节点对应的主键生成器对象
   private KeyGenerator keyGenerator;
+  // keyProperty 属性按照逗号拆分后的结果
   private String[] keyProperties;
+  // keyColumn 属性按照逗号拆分后的结果
   private String[] keyColumns;
+  // 是否存在嵌套结果集(resultMaps 集合中)
   private boolean hasNestedResultMaps;
+  // databaseId 属性
   private String databaseId;
+  // 日志对象
   private Log statementLog;
+  // TODO
   private LanguageDriver lang;
+  // resultSets 属性按照逗号拆分后的结果
   private String[] resultSets;
 
   MappedStatement() {
@@ -322,6 +347,12 @@ public final class MappedStatement {
     return boundSql;
   }
 
+  /**
+   * 将 String 按照 ',' 拆分为数组
+   *
+   * @param in
+   * @return
+   */
   private static String[] delimitedStringToArray(String in) {
     if (in == null || in.trim().length() == 0) {
       return null;

@@ -63,6 +63,7 @@ import org.apache.ibatis.type.TypeHandler;
  * @see #buildResultMapping(Class, String, String, Class, JdbcType, String, String, String, String, Class, List)
  *
  * @see #addResultMap(String, Class, String, Discriminator, List, Boolean)
+ * @see #addMappedStatement(String, SqlSource, StatementType, SqlCommandType, Integer, Integer, String, Class, String, Class, ResultSetType, boolean, boolean, boolean, KeyGenerator, String, String, String, LanguageDriver, String)
  *
  * @author Clinton Begin
  */
@@ -327,6 +328,31 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return new Discriminator.Builder(configuration, resultMapping, namespaceDiscriminatorMap).build();
   }
 
+  /**
+   * 创建 MappedStatement 对象
+   *
+   * @param id
+   * @param sqlSource
+   * @param statementType
+   * @param sqlCommandType
+   * @param fetchSize
+   * @param timeout
+   * @param parameterMap
+   * @param parameterType
+   * @param resultMap
+   * @param resultType
+   * @param resultSetType
+   * @param flushCache
+   * @param useCache
+   * @param resultOrdered
+   * @param keyGenerator
+   * @param keyProperty
+   * @param keyColumn
+   * @param databaseId
+   * @param lang
+   * @param resultSets
+   * @return
+   */
   public MappedStatement addMappedStatement(
       String id,
       SqlSource sqlSource,
@@ -349,13 +375,17 @@ public class MapperBuilderAssistant extends BaseBuilder {
       LanguageDriver lang,
       String resultSets) {
 
+    // 缓存引用失败抛出异常
     if (unresolvedCacheRef) {
       throw new IncompleteElementException("Cache-ref not yet resolved");
     }
 
+    // id = namespace + '.' + id
     id = applyCurrentNamespace(id, false);
+    // 是否是 select
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
 
+    // 使用具体的构造者
     MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, id, sqlSource, sqlCommandType)
         .resource(resource)
         .fetchSize(fetchSize)
@@ -368,19 +398,25 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .lang(lang)
         .resultOrdered(resultOrdered)
         .resultSets(resultSets)
+      // 通过 resultMap 属性, 获取已经解析完成的 ResultMap 对象
         .resultMaps(getStatementResultMaps(resultMap, resultType, id))
         .resultSetType(resultSetType)
         .flushCacheRequired(valueOrDefault(flushCache, !isSelect))
         .useCache(valueOrDefault(useCache, isSelect))
         .cache(currentCache);
 
+    // 根据 parameterMap 属性, 获取已经解析完成的 ParameterMap 对象 (废弃)
     ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
     if (statementParameterMap != null) {
       statementBuilder.parameterMap(statementParameterMap);
     }
 
+    // 构造 MappedStatement
     MappedStatement statement = statementBuilder.build();
+    // 将 MappedStatement 保存在 Configuration 的 `Map<String, MappedStatement> mappedStatements` 属性中(key: namespace.id)
     configuration.addMappedStatement(statement);
+
+    // 返回 MappedStatement
     return statement;
   }
 
@@ -439,6 +475,14 @@ public class MapperBuilderAssistant extends BaseBuilder {
       keyColumn, databaseId, lang, null);
   }
 
+  /**
+   * 处理属性值为空的情况
+   *
+   * @param value
+   * @param defaultValue
+   * @param <T>
+   * @return
+   */
   private <T> T valueOrDefault(T value, T defaultValue) {
     return value == null ? defaultValue : value;
   }
@@ -466,15 +510,32 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return parameterMap;
   }
 
+  /**
+   * 获取 resultMap 名称获取 ResultMap 对象
+   *
+   *  如果指定 resultMap 属性值, 则从 Configuration 中获取已经解析好的 ResultMap 对象
+   *  如果没有指定 resultMap 属性值, 而是指定 resultType 属性值. 则创建一个没有属性映射关系的 ResultMap 对象
+   *  resultMap 与 resultType 属性值都没有指定则返回空
+   *
+   * @see #addResultMap(String, Class, String, Discriminator, List, Boolean)
+   * @param resultMap   resultMap 属性值
+   * @param resultType  resultType 属性值解析后的 Class 对象
+   * @param statementId
+   * @return
+   */
   private List<ResultMap> getStatementResultMaps(
       String resultMap,
       Class<?> resultType,
       String statementId) {
+    // 得到 resultMap 的 id; resultMap = namespace.resultMap
     resultMap = applyCurrentNamespace(resultMap, true);
 
     List<ResultMap> resultMaps = new ArrayList<>();
+    // 指定了 resultMap 属性
     if (resultMap != null) {
+      // 将名称使用逗号拆分
       String[] resultMapNames = resultMap.split(",");
+      // 从 Configuration 对象中获取 ResultMap 并添加到集合中
       for (String resultMapName : resultMapNames) {
         try {
           resultMaps.add(configuration.getResultMap(resultMapName.trim()));
@@ -483,12 +544,16 @@ public class MapperBuilderAssistant extends BaseBuilder {
         }
       }
     } else if (resultType != null) {
+      // 没有指定 resultMap 属性, 但指定了 resultType 属性
+
+      // 创建一个不带属性映射的 ResultMap
       ResultMap inlineResultMap = new ResultMap.Builder(
           configuration,
           statementId + "-Inline",
           resultType,
           new ArrayList<>(),
           null).build();
+      // 添加到集合中
       resultMaps.add(inlineResultMap);
     }
     return resultMaps;

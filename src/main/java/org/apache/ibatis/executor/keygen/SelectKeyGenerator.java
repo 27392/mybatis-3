@@ -27,13 +27,19 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * 通过查询语句实现主键生成
+ *
  * @author Clinton Begin
  * @author Jeff Butler
  */
 public class SelectKeyGenerator implements KeyGenerator {
 
+  // 后缀
   public static final String SELECT_KEY_SUFFIX = "!selectKey";
+
+  // 是否在插入前执行
   private final boolean executeBefore;
+  // MappedStatement 对象(保存了SQL语句信息)
   private final MappedStatement keyStatement;
 
   public SelectKeyGenerator(MappedStatement keyStatement, boolean executeBefore) {
@@ -55,6 +61,13 @@ public class SelectKeyGenerator implements KeyGenerator {
     }
   }
 
+  /**
+   * 执行查询语句
+   *
+   * @param executor
+   * @param ms
+   * @param parameter
+   */
   private void processGeneratedKeys(Executor executor, MappedStatement ms, Object parameter) {
     try {
       if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
