@@ -29,11 +29,11 @@
       <result property="age" column="age"/>
     </resultMap>
 
-  <insert id="save">
+  <insert id="save" parameterType="cn.haohaoli.User">
     <selectKey keyProperty="id" keyColumn="c" >
       select count(1) as c from user
     </selectKey>
-    insert into user (id,`name`,age)
+    insert into user (id,`name`,age) value (#{name },#{age})
   </insert>
 
     <select id="getById" resultMap="BaseResultMap" parameterType="int">

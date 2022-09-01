@@ -108,7 +108,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     String parameterType = context.getStringAttribute("parameterType");
     Class<?> parameterTypeClass = resolveClass(parameterType);
 
-    // TODO 获取 lang 属性,
+    // 获取 lang 属性, 并解析对应的 LanguageDriver 对象
     String lang = context.getStringAttribute("lang");
     LanguageDriver langDriver = getLanguageDriver(lang);
 
@@ -129,7 +129,7 @@ public class XMLStatementBuilder extends BaseBuilder {
           ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
     }
 
-    // TODO SQL 语句
+    // 创建 SqlSource 对象(通过 SqlSource 可以创建 BoundSql, BoundSql中包含了SQL语句信息). 使用语言驱动
     SqlSource sqlSource = langDriver.createSqlSource(configuration, context, parameterTypeClass);
 
     // 获取 statementType, fetchSize, timeout 等属性信息
@@ -295,6 +295,12 @@ public class XMLStatementBuilder extends BaseBuilder {
     return previous.getDatabaseId() == null;
   }
 
+  /**
+   * 获取语言驱动
+   *
+   * @param lang
+   * @return
+   */
   private LanguageDriver getLanguageDriver(String lang) {
     Class<? extends LanguageDriver> langClass = null;
     if (lang != null) {

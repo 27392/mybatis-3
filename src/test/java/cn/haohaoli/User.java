@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.type.Alias;
 
 import java.util.List;
 

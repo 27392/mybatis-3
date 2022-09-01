@@ -77,7 +77,7 @@ public final class MappedStatement {
   private String databaseId;
   // 日志对象
   private Log statementLog;
-  // TODO
+  // 语言驱动
   private LanguageDriver lang;
   // resultSets 属性按照逗号拆分后的结果
   private String[] resultSets;

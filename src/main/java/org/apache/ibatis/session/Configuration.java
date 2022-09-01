@@ -128,6 +128,7 @@ public class Configuration {
   protected boolean shrinkWhitespacesInSql;
   protected boolean nullableOnForEach;
 
+  // 日志前缀
   protected String logPrefix;
   // 日志实现类
   protected Class<? extends Log> logImpl;
@@ -184,6 +185,7 @@ public class Configuration {
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry(this);
   // 别名注册器 (全局唯一)
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+  // 语言驱动注册器 (全局唯一)
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
   // SQL语句节点信息映射 (key: namespace.id)
@@ -254,18 +256,35 @@ public class Configuration {
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+    // 设置默认的语言驱动
     languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
+    // 注册 RawLanguageDriver 驱动
     languageRegistry.register(RawLanguageDriver.class);
   }
 
+  /**
+   * 获取日志前缀
+   *
+   * @return
+   */
   public String getLogPrefix() {
     return logPrefix;
   }
 
+  /**
+   * 设置日志前缀
+   *
+   * @param logPrefix
+   */
   public void setLogPrefix(String logPrefix) {
     this.logPrefix = logPrefix;
   }
 
+  /**
+   * 获取日志实现类
+   *
+   * @return
+   */
   public Class<? extends Log> getLogImpl() {
     return logImpl;
   }
@@ -745,10 +764,22 @@ public class Configuration {
     return interceptorChain.getInterceptors();
   }
 
+  /**
+   * 获取语言驱动注册器
+   *
+   * @return
+   */
   public LanguageDriverRegistry getLanguageRegistry() {
     return languageRegistry;
   }
 
+  /**
+   * 设置默认的语言驱动.
+   *
+   * 为空的情况下使用 XMLLanguageDriver 类
+   *
+   * @param driver
+   */
   public void setDefaultScriptingLanguage(Class<? extends LanguageDriver> driver) {
     if (driver == null) {
       driver = XMLLanguageDriver.class;
@@ -756,11 +787,18 @@ public class Configuration {
     getLanguageRegistry().setDefaultDriverClass(driver);
   }
 
+  /**
+   * 获取默认语言驱动(基本上都是 XMLLanguageDriver 对象)
+   *
+   * @return
+   */
   public LanguageDriver getDefaultScriptingLanguageInstance() {
     return languageRegistry.getDefaultDriver();
   }
 
   /**
+   * 获取指定的语言驱动
+   *
    * Gets the language driver.
    *
    * @param langClass

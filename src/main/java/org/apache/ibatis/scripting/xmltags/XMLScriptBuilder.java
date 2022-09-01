@@ -30,6 +30,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
+ * XMLScriptBuilder 负责创建 SqlSource
+ *
  * @author Clinton Begin
  */
 public class XMLScriptBuilder extends BaseBuilder {
@@ -51,6 +53,9 @@ public class XMLScriptBuilder extends BaseBuilder {
   }
 
 
+  /**
+   * 初始化动态节点的处理器
+   */
   private void initNodeHandlerMap() {
     nodeHandlerMap.put("trim", new TrimHandler());
     nodeHandlerMap.put("where", new WhereHandler());
@@ -64,7 +69,10 @@ public class XMLScriptBuilder extends BaseBuilder {
   }
 
   public SqlSource parseScriptNode() {
+    // 解析动态标签
     MixedSqlNode rootSqlNode = parseDynamicTags(context);
+
+    // 判断是否是动态SQL, 创建对应的 SqlSource 对象
     SqlSource sqlSource;
     if (isDynamic) {
       sqlSource = new DynamicSqlSource(configuration, rootSqlNode);
@@ -74,27 +82,47 @@ public class XMLScriptBuilder extends BaseBuilder {
     return sqlSource;
   }
 
+  /**
+   * 解析动态标签
+   *
+   * @param node
+   * @return
+   */
   protected MixedSqlNode parseDynamicTags(XNode node) {
     List<SqlNode> contents = new ArrayList<>();
+
+    // 遍历所有的子节点
     NodeList children = node.getNode().getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
       XNode child = node.newXNode(children.item(i));
+
+      // 节点类型为 CDATA_SECTION_NODE 或 TEXT_NODE
       if (child.getNode().getNodeType() == Node.CDATA_SECTION_NODE || child.getNode().getNodeType() == Node.TEXT_NODE) {
+        // 获取节点文本内容
         String data = child.getStringBody("");
         TextSqlNode textSqlNode = new TextSqlNode(data);
+        // 如果文本内容存在 `${}` 则会被认为是动态 SQL
         if (textSqlNode.isDynamic()) {
           contents.add(textSqlNode);
+          // 修改标识
           isDynamic = true;
         } else {
+          // 否则是静态 SQL
           contents.add(new StaticTextSqlNode(data));
         }
       } else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
+        // 如果是元素节点 <if> <where> 等
+
+        // 获取节点名称
         String nodeName = child.getNode().getNodeName();
+        // 通过节点名称获取对应的处理器
         NodeHandler handler = nodeHandlerMap.get(nodeName);
         if (handler == null) {
           throw new BuilderException("Unknown element <" + nodeName + "> in SQL statement.");
         }
+        // 使用处理器处理节点
         handler.handleNode(child, contents);
+        // 标记为动态 SQL
         isDynamic = true;
       }
     }

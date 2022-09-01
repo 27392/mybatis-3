@@ -17,4 +17,13 @@
     <select id="getByUserId" resultType="cn.haohaoli.Order">
         select * from `order` where user_id = #{id}
     </select>
+
+  <select id="selectList" parameterType="cn.haohaoli.User" resultType="cn.haohaoli.Order">
+    select * from `order`
+      <where>
+        <if test="id != ''">
+          user_id = #{id}
+        </if>
+      </where>
+  </select>
 </mapper>
