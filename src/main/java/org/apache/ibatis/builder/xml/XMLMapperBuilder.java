@@ -110,6 +110,11 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   /**
    * 解析 <mapper> 节点
+   *
+   * 主要流程为:
+   *  1. 解析 mapper 节点  - configurationElement(parser.evalNode("/mapper"));
+   *  2. 注册 Mapper 接口  - bindMapperForNamespace();
+   *  3. 处理解析失败的元素 - parsePending*()方法
    */
   public void parse() {
     // 判断是否加载过该映射文件
@@ -350,13 +355,14 @@ public class XMLMapperBuilder extends BaseBuilder {
    *    WEAK – 弱引用：更积极地基于垃圾收集器状态和弱引用规则移除对象。{@link org.apache.ibatis.cache.decorators.WeakCache}
    *
    * 属性的描述:
-   *  flushInterval（刷新间隔）属性可以被设置为任意的正整数，
+   *  flushInterval（刷新间隔）属性可以被设置为任意的正整数
    *    设置的值应该是一个以毫秒为单位的合理时间量。 默认情况是不设置，也就是没有刷新间隔，缓存仅仅会在调用语句时刷新。
-   *  size（引用数目）属性可以被设置为任意正整数，
+   *  size（引用数目）属性可以被设置为任意正整数
    *    要注意欲缓存对象的大小和运行环境中可用的内存资源。默认值是 1024。
-   *  readOnly（只读）属性可以被设置为 true 或 false。
+   *  readOnly（只读）属性可以被设置为 true 或 false
    *    只读的缓存会给所有调用者返回缓存对象的相同实例。 因此这些对象不能被修改。这就提供了可观的性能提升。而可读写的缓存会（通过序列化）返回缓存对象的拷贝。
-   *    速度上会慢一些，但是更安全，因此默认值是 false。
+   *    速度上会慢一些，但是更安全，因此默认值是 false
+   *
    * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E7%BC%93%E5%AD%98}
    * @param context
    */
@@ -442,6 +448,7 @@ public class XMLMapperBuilder extends BaseBuilder {
    * @return
    */
   private ResultMap resultMapElement(XNode resultMapNode) {
+    // 调用重载方法
     return resultMapElement(resultMapNode, Collections.emptyList(), null);
   }
 
@@ -466,6 +473,9 @@ public class XMLMapperBuilder extends BaseBuilder {
    *      <result property="subject" column="post_subject"/>
    *      <result property="body" column="post_body"/>
    *   </collection>
+   *   <discriminator javaType="int" column="draft">
+   *       <case value="1" resultType="DraftPost"/>
+   *   </discriminator>
    * </resultMap>
    *
    * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E7%BB%93%E6%9E%9C%E6%98%A0%E5%B0%84}
@@ -480,8 +490,8 @@ public class XMLMapperBuilder extends BaseBuilder {
 
     // 如果是 <resultMap>     节点获取 type 属性
     // 如果是 <collection>    节点获取 ofType 属性
-    // 如果是 <discriminator> 节点获取 resultType 属性
     // 如果是 <association>   节点获取 javaType 属性
+    // 如果是 <case>          节点获取 resultType 属性
     String type = resultMapNode.getStringAttribute("type",
         resultMapNode.getStringAttribute("ofType",
             resultMapNode.getStringAttribute("resultType",
@@ -521,9 +531,12 @@ public class XMLMapperBuilder extends BaseBuilder {
         resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
       }
     }
+
+    // 开始处理主节点信息
+
     // 获取 id 属性
     String id = resultMapNode.getStringAttribute("id", resultMapNode.getValueBasedIdentifier());
-    // 获取 extends 属性. 该属性指定了<resultMap>节点的继承关系
+    // 获取 extends 属性. 该属性指定了 <resultMap> 节点的继承关系
     String extend = resultMapNode.getStringAttribute("extends");
     // 获取 autoMapping 属性
     Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
@@ -595,7 +608,7 @@ public class XMLMapperBuilder extends BaseBuilder {
   }
 
   /**
-   * 解析 <discriminator> 节点 (不常用)
+   * 解析 <discriminator> 节点
    *
    * @param context
    * @param resultType
@@ -603,6 +616,7 @@ public class XMLMapperBuilder extends BaseBuilder {
    * @return
    */
   private Discriminator processDiscriminatorElement(XNode context, Class<?> resultType, List<ResultMapping> resultMappings) {
+    // 获取节点属性
     String column = context.getStringAttribute("column");
     String javaType = context.getStringAttribute("javaType");
     String jdbcType = context.getStringAttribute("jdbcType");
@@ -610,10 +624,15 @@ public class XMLMapperBuilder extends BaseBuilder {
     Class<?> javaTypeClass = resolveClass(javaType);
     Class<? extends TypeHandler<?>> typeHandlerClass = resolveClass(typeHandler);
     JdbcType jdbcTypeEnum = resolveJdbcType(jdbcType);
+
+    // 获取 <case> 节点的属性, 并将其内的子节点封装成 ResultMap 对象
     Map<String, String> discriminatorMap = new HashMap<>();
     for (XNode caseChild : context.getChildren()) {
+      // 获取 value 属性
       String value = caseChild.getStringAttribute("value");
+      // 创建 ResultMap 对象
       String resultMap = caseChild.getStringAttribute("resultMap", processNestedResultMappings(caseChild, resultMappings, resultType));
+      // value , resultMap.id
       discriminatorMap.put(value, resultMap);
     }
     return builderAssistant.buildDiscriminator(resultType, column, javaTypeClass, jdbcTypeEnum, typeHandlerClass, discriminatorMap);

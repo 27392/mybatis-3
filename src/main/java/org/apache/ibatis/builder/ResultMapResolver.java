@@ -24,6 +24,8 @@ import org.apache.ibatis.mapping.ResultMapping;
 /**
  * ResultMap 解析器
  *
+ * 如果解析失败会将其保存在 Configuration 对象中, 等待下次继续解析
+ *
  * @author Eduardo Macarron
  */
 public class ResultMapResolver {

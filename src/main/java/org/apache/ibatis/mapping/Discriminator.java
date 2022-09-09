@@ -21,11 +21,17 @@ import java.util.Map;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 鉴别器
+ *
+ * @link {https://mybatis.org/mybatis-3/zh/sqlmap-xml.html#%E9%89%B4%E5%88%AB%E5%99%A8}
  * @author Clinton Begin
  */
 public class Discriminator {
 
+  // <discriminator> 属性信息
   private ResultMapping resultMapping;
+
+  // key = case.value ; value = case 对应的 resultMap.id
   private Map<String, String> discriminatorMap;
 
   Discriminator() {

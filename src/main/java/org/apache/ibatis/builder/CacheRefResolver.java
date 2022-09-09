@@ -20,9 +20,12 @@ import org.apache.ibatis.cache.Cache;
 /**
  * 缓存引用解析器
  *
+ * 如果解析失败会将其保存在 Configuration 对象中, 等待下次继续解析
+ *
  * @author Clinton Begin
  */
 public class CacheRefResolver {
+
   private final MapperBuilderAssistant assistant;
   private final String cacheRefNamespace;
 

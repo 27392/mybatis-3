@@ -297,6 +297,17 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return resultMap;
   }
 
+  /**
+   * 创建 Discriminator 对象
+   *
+   * @param resultType
+   * @param column
+   * @param javaType
+   * @param jdbcType
+   * @param typeHandler
+   * @param discriminatorMap
+   * @return
+   */
   public Discriminator buildDiscriminator(
       Class<?> resultType,
       String column,
@@ -304,6 +315,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
       JdbcType jdbcType,
       Class<? extends TypeHandler<?>> typeHandler,
       Map<String, String> discriminatorMap) {
+
+    // 根据 <discriminator> 节点的属性创建 ResultMapping 对象
     ResultMapping resultMapping = buildResultMapping(
         resultType,
         null,
