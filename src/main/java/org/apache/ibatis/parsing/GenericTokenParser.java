@@ -24,7 +24,7 @@ public class GenericTokenParser {
   private final String openToken;
   // 结束占位符
   private final String closeToken;
-  //
+  // 处理器
   private final TokenHandler handler;
 
   public GenericTokenParser(String openToken, String closeToken, TokenHandler handler) {
@@ -34,11 +34,9 @@ public class GenericTokenParser {
   }
 
   public String parse(String text) {
-    // 判断是否为空
     if (text == null || text.isEmpty()) {
       return "";
     }
-    // 查找开始标记
     // search open token
     int start = text.indexOf(openToken);
     if (start == -1) {
