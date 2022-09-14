@@ -26,7 +26,7 @@ import org.apache.ibatis.session.Configuration;
 /**
  * 语言驱动接口
  *
- * 主要用来解析动态SQL和创建SQL参数处理器
+ * 主要用来解析SQL和创建SQL参数处理器
  *
  * 默认的是XML.当然官方也提供了(velocity, thymeleaf, freemarker) 等额外的三种方式支持
  *

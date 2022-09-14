@@ -500,7 +500,7 @@ public class XMLMapperBuilder extends BaseBuilder {
             resultMapNode.getStringAttribute("resultType",
                 resultMapNode.getStringAttribute("javaType"))));
 
-    // 将 type 属性解析成 Class 对象
+    // 将 type 解析成 Class 对象
     Class<?> typeClass = resolveClass(type);
     if (typeClass == null) {
       // 如果为空, 则判断是否为 <association>、<case> 节点，并从它们中解析

@@ -30,7 +30,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * XMLScriptBuilder 负责创建 SqlSource
+ * XMLScriptBuilder 负责解析SQL语句
  *
  * @author Clinton Begin
  */
