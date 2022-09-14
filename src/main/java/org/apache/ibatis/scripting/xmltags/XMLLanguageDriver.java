@@ -29,7 +29,7 @@ import org.apache.ibatis.scripting.defaults.RawSqlSource;
 import org.apache.ibatis.session.Configuration;
 
 /**
- * xml 语言驱动
+ * XML 语言驱动
  *
  * @author Eduardo Macarron
  */
@@ -42,22 +42,27 @@ public class XMLLanguageDriver implements LanguageDriver {
 
   @Override
   public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
-    // 创建 XMLScriptBuilder 对象来解析
+    // 解析XML节点信息, 使用 XMLScriptBuilder 对象
     XMLScriptBuilder builder = new XMLScriptBuilder(configuration, script, parameterType);
+    // 解析SQL语句
     return builder.parseScriptNode();
   }
 
   @Override
   public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
     // issue #3
-    // 如果是 <script> 节点
+    // 如果字符串是 <script> 开头, 将其转换成XML节点.否则正常解析
     if (script.startsWith("<script>")) {
+      // 转换成XML节点
       XPathParser parser = new XPathParser(script, false, configuration.getVariables(), new XMLMapperEntityResolver());
       // 调用重载方法
       return createSqlSource(configuration, parser.evalNode("/script"), parameterType);
     } else {
       // issue #127
+      // 使用系统变量替换`${}`占位符
       script = PropertyParser.parse(script, configuration.getVariables());
+
+      // 判断是否是动态节点.并创建对应的 SqlSource 对象
       TextSqlNode textSqlNode = new TextSqlNode(script);
       if (textSqlNode.isDynamic()) {
         return new DynamicSqlSource(configuration, textSqlNode);

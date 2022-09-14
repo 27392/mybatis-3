@@ -24,7 +24,13 @@ import org.apache.ibatis.scripting.defaults.DefaultParameterHandler;
 import org.apache.ibatis.session.Configuration;
 
 /**
- * 语言驱动
+ * 语言驱动接口
+ *
+ * 主要用来解析动态SQL和创建SQL参数处理器
+ *
+ * 默认的是XML.当然官方也提供了(velocity, thymeleaf, freemarker) 等额外的三种方式支持
+ *
+ * @see org.apache.ibatis.scripting.xmltags.XMLLanguageDriver
  */
 public interface LanguageDriver {
 
@@ -43,7 +49,7 @@ public interface LanguageDriver {
   ParameterHandler createParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql);
 
   /**
-   * 创建 SqlSource
+   * 创建 SqlSource (根据XML节点)
    *
    * Creates an {@link SqlSource} that will hold the statement read from a mapper xml file.
    * It is called during startup, when the mapped statement is read from a class or an xml file.
@@ -56,7 +62,7 @@ public interface LanguageDriver {
   SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType);
 
   /**
-   * 创建 SqlSource
+   * 创建 SqlSource (根据字符串)
    *
    * Creates an {@link SqlSource} that will hold the statement read from an annotation.
    * It is called during startup, when the mapped statement is read from a class or an xml file.

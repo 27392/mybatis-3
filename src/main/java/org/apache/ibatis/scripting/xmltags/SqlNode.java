@@ -16,8 +16,19 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * SQL节点
+ *
+ * 一条sql语句由多个sql节点组成
+ *
  * @author Clinton Begin
  */
 public interface SqlNode {
+
+  /**
+   * 根据 sql 语句上下文拼接sql.
+   *
+   * @param context
+   * @return
+   */
   boolean apply(DynamicContext context);
 }

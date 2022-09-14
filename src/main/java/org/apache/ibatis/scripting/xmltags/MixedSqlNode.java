@@ -20,11 +20,13 @@ import java.util.List;
 /**
  * 混合的节点
  *
+ * 包含了多个 SqlNode 对象
+ *
  * @author Clinton Begin
  */
 public class MixedSqlNode implements SqlNode {
 
-  // 多个 SQL 语句节点
+  // 多个 SQL 节点
   private final List<SqlNode> contents;
 
   public MixedSqlNode(List<SqlNode> contents) {
@@ -33,6 +35,7 @@ public class MixedSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 遍历调用节点的 apply 方法
     contents.forEach(node -> node.apply(context));
     return true;
   }

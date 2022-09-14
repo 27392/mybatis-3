@@ -27,56 +27,111 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * SQL语句上下文
+ *
+ * 负责记录动态SQL解析后的SQL语句片段
+ *
+ * @see SqlNode
  * @author Clinton Begin
  */
 public class DynamicContext {
 
+  // 参数
   public static final String PARAMETER_OBJECT_KEY = "_parameter";
+  // 数据库id
   public static final String DATABASE_ID_KEY = "_databaseId";
 
   static {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
 
+  // 内容上下文 (继承 HashMap<String, Object>)
   private final ContextMap bindings;
+  // 保存 sql 片段
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
+  // 计数
   private int uniqueNumber = 0;
 
+  /**
+   * 构造函数
+   *
+   * @param configuration
+   * @param parameterObject
+   */
   public DynamicContext(Configuration configuration, Object parameterObject) {
+    // 参数非空并且参数不是 Map 类型
     if (parameterObject != null && !(parameterObject instanceof Map)) {
+      // 创建参数对应的 MetaObject
       MetaObject metaObject = configuration.newMetaObject(parameterObject);
+      // 参数是否存在类型处理器
       boolean existsTypeHandler = configuration.getTypeHandlerRegistry().hasTypeHandler(parameterObject.getClass());
+      // 创建上下文对象
       bindings = new ContextMap(metaObject, existsTypeHandler);
     } else {
+      // 创建上下文对象
       bindings = new ContextMap(null, false);
     }
+    // 参数绑定到上下文
     bindings.put(PARAMETER_OBJECT_KEY, parameterObject);
+    // 数据库id 绑定到上下文中
     bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());
   }
 
+  /**
+   * 获取上下文
+   *
+   * @return
+   */
   public Map<String, Object> getBindings() {
     return bindings;
   }
 
+  /**
+   * 添加参数
+   *
+   * @param name
+   * @param value
+   */
   public void bind(String name, Object value) {
     bindings.put(name, value);
   }
 
+  /**
+   * 追加sql片段
+   *
+   * @param sql
+   */
   public void appendSql(String sql) {
     sqlBuilder.add(sql);
   }
 
+  /**
+   * 获取解析后的sql语句
+   *
+   * @return
+   */
   public String getSql() {
     return sqlBuilder.toString().trim();
   }
 
+  /**
+   * 获取计数
+   *
+   * @return
+   */
   public int getUniqueNumber() {
     return uniqueNumber++;
   }
 
+  /**
+   * 上下文
+   */
   static class ContextMap extends HashMap<String, Object> {
     private static final long serialVersionUID = 2977601501966151582L;
+
+    // 参数对应的 MetaObject
     private final MetaObject parameterMetaObject;
+    // 参数是否存在类型处理器
     private final boolean fallbackParameterObject;
 
     public ContextMap(MetaObject parameterMetaObject, boolean fallbackParameterObject) {
@@ -86,6 +141,7 @@ public class DynamicContext {
 
     @Override
     public Object get(Object key) {
+      // 存在则直接返回
       String strKey = (String) key;
       if (super.containsKey(strKey)) {
         return super.get(strKey);

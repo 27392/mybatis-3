@@ -35,10 +35,13 @@ import org.w3c.dom.NodeList;
  * @author Clinton Begin
  */
 public class XMLScriptBuilder extends BaseBuilder {
-
+  // SQL语句节点
   private final XNode context;
+  // 是否是动态SQL (包含动态SQL节点或存在`${}`)
   private boolean isDynamic;
+  // 参数类型
   private final Class<?> parameterType;
+  // 动态节点与处理器的映射关系
   private final Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
 
   public XMLScriptBuilder(Configuration configuration, XNode context) {
@@ -49,9 +52,10 @@ public class XMLScriptBuilder extends BaseBuilder {
     super(configuration);
     this.context = context;
     this.parameterType = parameterType;
+
+    // 初始化动态节点映射关系
     initNodeHandlerMap();
   }
-
 
   /**
    * 初始化动态节点的处理器
@@ -68,6 +72,11 @@ public class XMLScriptBuilder extends BaseBuilder {
     nodeHandlerMap.put("bind", new BindHandler());
   }
 
+  /**
+   * 解析SQL语句
+   *
+   * @return
+   */
   public SqlSource parseScriptNode() {
     // 解析动态标签
     MixedSqlNode rootSqlNode = parseDynamicTags(context);
@@ -75,8 +84,10 @@ public class XMLScriptBuilder extends BaseBuilder {
     // 判断是否是动态SQL, 创建对应的 SqlSource 对象
     SqlSource sqlSource;
     if (isDynamic) {
+      // 动态SQL, 创建 DynamicSqlSource 对象
       sqlSource = new DynamicSqlSource(configuration, rootSqlNode);
     } else {
+      // 非动态SQL, 创建 RawSqlSource 对象
       sqlSource = new RawSqlSource(configuration, rootSqlNode, parameterType);
     }
     return sqlSource;
@@ -84,6 +95,8 @@ public class XMLScriptBuilder extends BaseBuilder {
 
   /**
    * 解析动态标签
+   *
+   * 动态节点可以无限嵌套, 所以这是个递归的过程
    *
    * @param node
    * @return
@@ -101,17 +114,17 @@ public class XMLScriptBuilder extends BaseBuilder {
         // 获取节点文本内容
         String data = child.getStringBody("");
         TextSqlNode textSqlNode = new TextSqlNode(data);
-        // 如果文本内容存在 `${}` 则会被认为是动态 SQL
+        // 如果文本内容存在 `${}` 则会被认为是动态SQL
         if (textSqlNode.isDynamic()) {
           contents.add(textSqlNode);
-          // 修改标识
+          // 标记为动态SQL
           isDynamic = true;
         } else {
-          // 否则是静态 SQL
+          // 静态 SQL
           contents.add(new StaticTextSqlNode(data));
         }
       } else if (child.getNode().getNodeType() == Node.ELEMENT_NODE) { // issue #628
-        // 如果是元素节点 <if> <where> 等
+        // 如果是元素节点 <if> <where> 等动态节点
 
         // 获取节点名称
         String nodeName = child.getNode().getNodeName();
@@ -122,13 +135,16 @@ public class XMLScriptBuilder extends BaseBuilder {
         }
         // 使用处理器处理节点
         handler.handleNode(child, contents);
-        // 标记为动态 SQL
+        // 标记为动态SQL
         isDynamic = true;
       }
     }
     return new MixedSqlNode(contents);
   }
 
+  /**
+   * SQL节点处理器
+   */
   private interface NodeHandler {
     void handleNode(XNode nodeToHandle, List<SqlNode> targetContents);
   }
@@ -217,6 +233,7 @@ public class XMLScriptBuilder extends BaseBuilder {
 
     @Override
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
+      // 解析 <if> 节点下的子节点
       MixedSqlNode mixedSqlNode = parseDynamicTags(nodeToHandle);
       String test = nodeToHandle.getStringAttribute("test");
       IfSqlNode ifSqlNode = new IfSqlNode(mixedSqlNode, test);

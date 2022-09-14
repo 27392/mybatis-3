@@ -48,6 +48,11 @@ public class XMLIncludeTransformer {
     this.builderAssistant = builderAssistant;
   }
 
+  /**
+   * 解析 <include> 节点
+   *
+   * @param source
+   */
   public void applyIncludes(Node source) {
     // 将 Configuration 中的环境变量信息添加到 variablesContext 属性中
     Properties variablesContext = new Properties();

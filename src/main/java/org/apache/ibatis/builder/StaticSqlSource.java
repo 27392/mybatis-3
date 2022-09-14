@@ -27,8 +27,11 @@ import org.apache.ibatis.session.Configuration;
  */
 public class StaticSqlSource implements SqlSource {
 
+  // 可运行的sql
   private final String sql;
+  // 参数映射集合
   private final List<ParameterMapping> parameterMappings;
+  // Configuration 对象
   private final Configuration configuration;
 
   public StaticSqlSource(Configuration configuration, String sql) {

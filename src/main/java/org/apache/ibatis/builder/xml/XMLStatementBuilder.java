@@ -63,6 +63,11 @@ public class XMLStatementBuilder extends BaseBuilder {
   /**
    * 解析 <select>、<insert>、<update>、<delete> 等 SQL语句节点
    *
+   * 1. 解析 <include> 节点
+   * 2. 解析 <selectKey> 节点
+   * 3. 构建 SqlSource 对象
+   * 4. 构建 MappedStatement 对象
+   *
    * <mapper>
    *    <insert id="insertAuthor" parameterType="org.apache.ibatis.domain.blog.Author">
    *        insert into Author (id,username,password,email,bio) values (#{id},#{username},#{password},#{email},#{bio})
@@ -161,25 +166,36 @@ public class XMLStatementBuilder extends BaseBuilder {
   }
 
   /**
-   * 解析 <selectKey> 节点
+   * 解析当前节点内的多个 <selectKey> 节点
+   *
+   * 具体的流程:
+   *  1. 过滤可用的 <selectKey> 节点
+   *  2. 创建并缓存 MappedStatement 对象
+   *  3. 创建并缓存 SelectKeyGenerator 对象
+   *  4. 删除节点内所有的 <selectKey> 节点
    *
    * @param id
    * @param parameterTypeClass
    * @param langDriver
    */
   private void processSelectKeyNodes(String id, Class<?> parameterTypeClass, LanguageDriver langDriver) {
+    // 获取节点内的 selectKey 节点
     List<XNode> selectKeyNodes = context.evalNodes("selectKey");
+
+    // 是否配置 databaseId
     if (configuration.getDatabaseId() != null) {
+      // 调用重载方法(使用 databaseId)
       parseSelectKeyNodes(id, selectKeyNodes, parameterTypeClass, langDriver, configuration.getDatabaseId());
     }
+    // 调用重载方法
     parseSelectKeyNodes(id, selectKeyNodes, parameterTypeClass, langDriver, null);
 
-    // 删除 <selectKey> 节点
+    // 删除当前节点内的多个 <selectKey> 节点
     removeSelectKeyNodes(selectKeyNodes);
   }
 
   /**
-   * 解析 <selectKey> 节点
+   * 解析当前节点内的多个 <selectKey> 节点
    *
    * @param parentId
    * @param list
@@ -196,7 +212,7 @@ public class XMLStatementBuilder extends BaseBuilder {
 
       // 匹配节点是否适用于当前使用的数据库
       if (databaseIdMatchesCurrent(id, databaseId, skRequiredDatabaseId)) {
-        // 解析
+        // 解析 <selectKey> 节点
         parseSelectKeyNode(id, nodeToHandle, parameterTypeClass, langDriver, databaseId);
       }
     }

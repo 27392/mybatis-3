@@ -21,10 +21,20 @@ package org.apache.ibatis.mapping;
  * Represents the content of a mapped statement read from an XML file or an annotation.
  * It creates the SQL that will be passed to the database out of the input parameter received from the user.
  *
+ * @see org.apache.ibatis.scripting.xmltags.DynamicSqlSource  负责处理动态SQL(包含动态SQL节点与`${}`占位符)
+ * @see org.apache.ibatis.scripting.defaults.RawSqlSource     负责处理静态SQL
+ *
+ * @see org.apache.ibatis.builder.StaticSqlSource             负责处理创建 BoundSql. DynamicSqlSource与RawSqlSource最后都会使用该类
  * @author Clinton Begin
  */
 public interface SqlSource {
 
+  /**
+   * 获取 BoundSql 对象
+   *
+   * @param parameterObject
+   * @return
+   */
   BoundSql getBoundSql(Object parameterObject);
 
 }

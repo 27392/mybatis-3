@@ -30,6 +30,12 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 
 /**
+ * 解析 Sql 参数
+ *
+ * 1. 将`#{}` 替换成 `?`, 并将 `#{}` 解析成{@link ParameterMapping}
+ * 2. 创建 {@link StaticSqlSource} 对象(包含解析好的sql与 ParameterMapping 集合)
+ *
+ * @see StaticSqlSource
  * @author Clinton Begin
  */
 public class SqlSourceBuilder extends BaseBuilder {
@@ -40,18 +46,37 @@ public class SqlSourceBuilder extends BaseBuilder {
     super(configuration);
   }
 
+  /**
+   * 处理参数信息
+   *
+   * @param originalSql
+   * @param parameterType
+   * @param additionalParameters
+   * @return
+   */
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
+    // 负责将 `#{}` 替换成 `?`, 并将并将 `#{}` 解析成 ParameterMapping
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
+
+    // 替换后的可运行的sql
     String sql;
+    // 是否需要去除多余的空格
     if (configuration.isShrinkWhitespacesInSql()) {
       sql = parser.parse(removeExtraWhitespaces(originalSql));
     } else {
       sql = parser.parse(originalSql);
     }
+    // 创建 StaticSqlSource 对象
     return new StaticSqlSource(configuration, sql, handler.getParameterMappings());
   }
 
+  /**
+   * 去除多余的空格
+   *
+   * @param original
+   * @return
+   */
   public static String removeExtraWhitespaces(String original) {
     StringTokenizer tokenizer = new StringTokenizer(original);
     StringBuilder builder = new StringBuilder();
@@ -68,8 +93,11 @@ public class SqlSourceBuilder extends BaseBuilder {
 
   private static class ParameterMappingTokenHandler extends BaseBuilder implements TokenHandler {
 
+    // 参数映射集合
     private final List<ParameterMapping> parameterMappings = new ArrayList<>();
+    // 参数类型
     private final Class<?> parameterType;
+    // sql上下文 对应的 MetaObject
     private final MetaObject metaParameters;
 
     public ParameterMappingTokenHandler(Configuration configuration, Class<?> parameterType, Map<String, Object> additionalParameters) {
@@ -84,13 +112,23 @@ public class SqlSourceBuilder extends BaseBuilder {
 
     @Override
     public String handleToken(String content) {
+      // 解析参数
       parameterMappings.add(buildParameterMapping(content));
+      // 替换成 `?`
       return "?";
     }
 
+    /**
+     * 创建 {@link ParameterMapping} 对象
+     *
+     * @param content
+     * @return
+     */
     private ParameterMapping buildParameterMapping(String content) {
       Map<String, String> propertiesMap = parseParameterMapping(content);
       String property = propertiesMap.get("property");
+
+      // 获取属性对应的 Class 类型
       Class<?> propertyType;
       if (metaParameters.hasGetter(property)) { // issue #448 get type from additional params
         propertyType = metaParameters.getGetterType(property);
@@ -108,6 +146,8 @@ public class SqlSourceBuilder extends BaseBuilder {
           propertyType = Object.class;
         }
       }
+
+      // 创建 ParameterMapping 建造者对象, 并设置相关值
       ParameterMapping.Builder builder = new ParameterMapping.Builder(configuration, property, propertyType);
       Class<?> javaType = propertyType;
       String typeHandlerAlias = null;

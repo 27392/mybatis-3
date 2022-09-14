@@ -24,6 +24,10 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ *
+ * 处理完任何动态内容后，从{@link SqlSource}获得的实际SQL字符串。SQL可能有SQL占位符“?”和一个参数映射列表(有序)，其
+ * 中包含每个参数的附加信息(至少是要从中读取值的输入对象的属性名)。<p>还可以有由动态语言创建的附加参数(对于循环，bind…)
+ *
  * An actual SQL String got from an {@link SqlSource} after having processed any dynamic content.
  * The SQL may have SQL placeholders "?" and an list (ordered) of an parameter mappings
  * with the additional information for each parameter (at least the property name of the input object to read
@@ -35,10 +39,15 @@ import org.apache.ibatis.session.Configuration;
  */
 public class BoundSql {
 
+  // sql语句
   private final String sql;
+  // 参数映射
   private final List<ParameterMapping> parameterMappings;
+  // 参数
   private final Object parameterObject;
+  // 额外的参数
   private final Map<String, Object> additionalParameters;
+  // additionalParameters 属性对应的 MetaObject 对象
   private final MetaObject metaParameters;
 
   public BoundSql(Configuration configuration, String sql, List<ParameterMapping> parameterMappings, Object parameterObject) {

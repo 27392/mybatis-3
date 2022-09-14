@@ -242,7 +242,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       try {
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
-        // 解析失败(应该是被引用的缓存、SQL 片段、ResultMap等对象未找到)将 XMLStatementBuilder 对象保存到 Configuration 中
+        // 解析失败(应该是被引用的 SQL 片段未找到)将 XMLStatementBuilder 对象保存到 Configuration 中
         configuration.addIncompleteStatement(statementParser);
       }
     }
@@ -457,8 +457,11 @@ public class XMLMapperBuilder extends BaseBuilder {
    *
    * 因为 <collection>、<association>、<discriminator> 等节点中子节点与 <resultMap> 基本一样. 所以这是一个通用解析的方法
    *
-   * 1. 先将子节点解析成 ResultMapping 对象
-   * 2. 在将 ResultMapping 与自身的属性一起创建 ResultMap 对象
+   * 具体的步骤如下:
+   *  1. 获取 <resultMap> 节点的属性
+   *  2. 将子节点解析成 ResultMapping 对象
+   *  3. 将 ResultMapping 与自身的属性一起创建 ResultMap 对象
+   *  4. 解析失败的情况下,将 ResultMapResolver 添加到 Configuration.incompleteResultMaps 属性中
    *
    * <resultMap id="blogWithPostsLazy" type="Blog">
    *   <id property="id" column="id"/>

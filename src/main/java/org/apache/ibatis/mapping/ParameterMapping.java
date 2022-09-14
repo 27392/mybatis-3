@@ -23,20 +23,35 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 参数映射
+ *
+ * #{age, javaType=int, jdbcType=NUMERIC, typeHandler=MyTypeHandler}
+ * #{height, javaType=double, jdbcType=NUMERIC, numericScale=2}
+ * #{department, mode=OUT, jdbcType=CURSOR, javaType=ResultSet, resultMap=departmentResultMap}
+ * #{middleInitial, mode=OUT, jdbcType=STRUCT, jdbcTypeName=MY_TYPE, resultMap=departmentResultMap}
  * @author Clinton Begin
  */
 public class ParameterMapping {
 
   private Configuration configuration;
 
+  // 名称 (`#{}`中的名称)
   private String property;
+  // mode 属性 (输出还是输入. 默认是输入)
   private ParameterMode mode;
+  // javaType 属性
   private Class<?> javaType = Object.class;
+  // jdbcType 属性
   private JdbcType jdbcType;
+  // numericScale 属性 (指定小数点后保留的位数)
   private Integer numericScale;
+  // typeHandler 属性
   private TypeHandler<?> typeHandler;
+  // resultMap 属性对应的 ResultMap 对象的 id
   private String resultMapId;
+  // jdbcTypeName 属性
   private String jdbcTypeName;
+  // expression 属性
   private String expression;
 
   private ParameterMapping() {
