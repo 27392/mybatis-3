@@ -128,7 +128,8 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
 
     // Mybatis 解析映射配置文件时, 是按照从文件头到文件尾的顺序解析的，
-    // 但是有时候在解析一个节点时，会引用定义在该节点之后的、还未解析的节点，这就会导致解析失败井抛出 IncompleteElementException
+    // 有时候在解析一个节点时，会引用定义在该节点之后的、还未解析的节点，这就会导致解析失败井抛出 IncompleteElementException,
+    // 根据抛出异常的节点不同,MyBatis 会创建不同的＊Resolver 对象，并添加到 Configuration 的不同 incomplete＊ 集合中
     // 所以在每解析完一个映射文件后都会尝试再次去解析那些没有解析成功的对象
     parsePendingResultMaps();
     parsePendingCacheRefs();
@@ -254,11 +255,14 @@ public class XMLMapperBuilder extends BaseBuilder {
    * @see #resultMapElement(XNode, List, Class)
    */
   private void parsePendingResultMaps() {
+    // 获取集合
     Collection<ResultMapResolver> incompleteResultMaps = configuration.getIncompleteResultMaps();
     synchronized (incompleteResultMaps) {
+      // 遍历
       Iterator<ResultMapResolver> iter = incompleteResultMaps.iterator();
       while (iter.hasNext()) {
         try {
+          // 如果解析成功则从集合中删除
           iter.next().resolve();
           iter.remove();
         } catch (IncompleteElementException e) {
