@@ -111,7 +111,6 @@ public class ParamNameResolver {
       // 最后将参数下标以及名称放入map中
       map.put(paramIndex, name);
     }
-    // 对
     names = Collections.unmodifiableSortedMap(map);
   }
 
