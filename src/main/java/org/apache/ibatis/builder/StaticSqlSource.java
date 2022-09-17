@@ -23,6 +23,9 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * StaticSqlSource
+ *
+ * @see SqlSourceBuilder
  * @author Clinton Begin
  */
 public class StaticSqlSource implements SqlSource {

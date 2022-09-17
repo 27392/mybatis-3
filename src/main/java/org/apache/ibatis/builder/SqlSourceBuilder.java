@@ -30,7 +30,7 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 
 /**
- * 解析 Sql 参数
+ * SqlSourceBuilder 负责解析 Sql 参数与替换`#{}`
  *
  * 1. 将`#{}` 替换成 `?`, 并将 `#{}` 解析成{@link ParameterMapping}
  * 2. 创建 {@link StaticSqlSource} 对象(包含解析好的sql与 ParameterMapping 集合)
@@ -49,13 +49,13 @@ public class SqlSourceBuilder extends BaseBuilder {
   /**
    * 处理参数信息
    *
-   * @param originalSql
-   * @param parameterType
-   * @param additionalParameters
-   * @return
+   * @param originalSql           经过 SqlNode 处理过的sql语句
+   * @param parameterType         参数的class类型
+   * @param additionalParameters  经过 SqlNode 处理过后的 DynamicContext.bindings 集合
+   * @return {@link StaticSqlSource}
    */
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
-    // 负责将 `#{}` 替换成 `?`, 并将并将 `#{}` 解析成 ParameterMapping
+    // ParameterMappingTokenHandler 负责将 `#{}` 替换成 `?`, 并将 `#{}` 解析成 ParameterMapping
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
 
@@ -91,6 +91,10 @@ public class SqlSourceBuilder extends BaseBuilder {
     return builder.toString();
   }
 
+  /**
+   * 负责将 `#{}` 替换成 `?`, 并将 `#{}` 解析成 {@link ParameterMapping}
+   * 同样是 {@link BaseBuilder} 的子类
+   */
   private static class ParameterMappingTokenHandler extends BaseBuilder implements TokenHandler {
 
     // 参数映射集合
@@ -112,7 +116,7 @@ public class SqlSourceBuilder extends BaseBuilder {
 
     @Override
     public String handleToken(String content) {
-      // 解析参数
+      // 创建 ParameterMapping 对象
       parameterMappings.add(buildParameterMapping(content));
       // 替换成 `?`
       return "?";

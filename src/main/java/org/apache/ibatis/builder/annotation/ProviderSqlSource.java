@@ -30,6 +30,12 @@ import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 负责处理注解 Provider 系列注解
+ *
+ * @see org.apache.ibatis.annotations.InsertProvider
+ * @see org.apache.ibatis.annotations.DeleteProvider
+ * @see org.apache.ibatis.annotations.UpdateProvider
+ * @see org.apache.ibatis.annotations.SelectProvider
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
