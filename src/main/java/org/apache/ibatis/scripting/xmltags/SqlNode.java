@@ -16,10 +16,22 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
- * SQL节点
+ * SQL节点接口 (在组合模式中的表示的是`抽象组件`角色)
  *
  * 一条sql语句由多个sql节点组成
  *
+ * @see MixedSqlNode        包含多个SQL节点 (在组合模式中的表示的是`树枝`角色)
+ *
+ * 以下类在组合模式中的表示的是`树叶`角色
+ * @see StaticTextSqlNode   表示非动态SQL语句节点
+ * @see TextSqlNode         表示包含`${}`占位符的动态SQL节点
+ * @see ChooseSqlNode       表示的是<choose>节点
+ * @see ForEachSqlNode      表示的是<foreach>节点
+ * @see IfSqlNode           表示的是<if>节点
+ * @see VarDeclSqlNode      表示的是<bind>节点
+ * @see TrimSqlNode         表示的是<trim>节点
+ * @see WhereSqlNode        表示的是<where>节点,继承与 {@link TrimSqlNode}
+ * @see SetSqlNode          表示的是<set>节点,继承与 {@link TrimSqlNode}
  * @author Clinton Begin
  */
 public interface SqlNode {
