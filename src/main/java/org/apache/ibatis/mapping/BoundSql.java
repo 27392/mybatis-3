@@ -45,7 +45,7 @@ public class BoundSql {
   private final List<ParameterMapping> parameterMappings;
   // 参数
   private final Object parameterObject;
-  // 额外的参数
+  // 额外的参数（一般是使用<foreach>与<bind>节点才存在额外的参数）
   private final Map<String, Object> additionalParameters;
   // additionalParameters 属性对应的 MetaObject 对象
   private final MetaObject metaParameters;
@@ -70,15 +70,33 @@ public class BoundSql {
     return parameterObject;
   }
 
+  /**
+   * 是否存在额外的参数（支持表达式）
+   *
+   * @param name
+   * @return
+   */
   public boolean hasAdditionalParameter(String name) {
     String paramName = new PropertyTokenizer(name).getName();
     return additionalParameters.containsKey(paramName);
   }
 
+  /**
+   * 设置额外的参数（支持表达式）
+   *
+   * @param name
+   * @param value
+   */
   public void setAdditionalParameter(String name, Object value) {
     metaParameters.setValue(name, value);
   }
 
+  /**
+   * 获取额外的参数（支持表达式）
+   *
+   * @param name
+   * @return
+   */
   public Object getAdditionalParameter(String name) {
     return metaParameters.getValue(name);
   }

@@ -21,6 +21,10 @@ import java.util.List;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 对应 <set> 节点
+ *
+ * 继承于{@link TrimSqlNode}
+ *
  * @author Clinton Begin
  */
 public class SetSqlNode extends TrimSqlNode {
@@ -28,6 +32,7 @@ public class SetSqlNode extends TrimSqlNode {
   private static final List<String> COMMA = Collections.singletonList(",");
 
   public SetSqlNode(Configuration configuration,SqlNode contents) {
+    // 前缀 SET, 如果 SQL 片段开头或结尾出现 `,` 的情况下会将其删除
     super(configuration, contents, "SET", COMMA, null, COMMA);
   }
 

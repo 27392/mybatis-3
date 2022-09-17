@@ -16,11 +16,21 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * 对应 <bind> 节点
+ *
+ * <select id="selectBlogsLike" resultType="Blog">
+ *   <bind name="pattern" value="'%' + _parameter.getTitle() + '%'" />
+ *   SELECT * FROM BLOG WHERE title LIKE #{pattern}
+ * </select>
+ *
  * @author Frank D. Martinez [mnesarco]
+ * @link {https://mybatis.org/mybatis-3/zh/dynamic-sql.html#bind}
  */
 public class VarDeclSqlNode implements SqlNode {
 
+  // name 属性
   private final String name;
+  // 表达式
   private final String expression;
 
   public VarDeclSqlNode(String var, String exp) {
@@ -30,7 +40,9 @@ public class VarDeclSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    // 解析表达式的值
     final Object value = OgnlCache.getValue(expression, context.getBindings());
+    // 将 name 与 表达式的值添加到 DynamicContext.bindings 中
     context.bind(name, value);
     return true;
   }

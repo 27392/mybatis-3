@@ -126,6 +126,7 @@ public class Configuration {
   protected boolean useActualParamName = true;
   protected boolean returnInstanceForEmptyRow;
   protected boolean shrinkWhitespacesInSql;
+  // 为 'foreach' 标签的 'nullable' 属性指定默认值。（新增于 3.5.9）
   protected boolean nullableOnForEach;
 
   // 日志前缀

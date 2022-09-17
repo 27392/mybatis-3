@@ -30,7 +30,7 @@ import org.apache.ibatis.type.SimpleTypeRegistry;
  */
 public class TextSqlNode implements SqlNode {
 
-  // sql 语句含有`${}`
+  // sql 语句
   private final String text;
   // sql 注入正则(默认值为 null,应该是为了防止sql注入)
   private final Pattern injectionFilter;
@@ -50,6 +50,7 @@ public class TextSqlNode implements SqlNode {
    * @return
    */
   public boolean isDynamic() {
+    // 解析内容中包含 `${}`
     DynamicCheckerTokenParser checker = new DynamicCheckerTokenParser();
     GenericTokenParser parser = createParser(checker);
     parser.parse(text);
@@ -60,6 +61,7 @@ public class TextSqlNode implements SqlNode {
   public boolean apply(DynamicContext context) {
     // 创建 BindingTokenParser 解析 `${}`占位符
     GenericTokenParser parser = createParser(new BindingTokenParser(context, injectionFilter));
+    // 将解析后的 SQL 片段添加到 DynamicContext 中
     context.appendSql(parser.parse(text));
     return true;
   }

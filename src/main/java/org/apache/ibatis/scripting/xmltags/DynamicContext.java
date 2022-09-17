@@ -55,11 +55,11 @@ public class DynamicContext {
   /**
    * 构造函数
    *
-   * @param configuration
-   * @param parameterObject
+   * @param configuration     Configuration 对象
+   * @param parameterObject   运行时用户指定的参数
    */
   public DynamicContext(Configuration configuration, Object parameterObject) {
-    // 参数非空并且参数不是 Map 类型
+    // 对不是 Map 的类型参数会创建对应的 MetaObject 对象，并创建 ContextMap
     if (parameterObject != null && !(parameterObject instanceof Map)) {
       // 创建参数对应的 MetaObject
       MetaObject metaObject = configuration.newMetaObject(parameterObject);
@@ -147,13 +147,18 @@ public class DynamicContext {
         return super.get(strKey);
       }
 
+      // 处理不存在的情况 ~
+
+      // 参数对应的 MetaObject 对象不存在直接返回
       if (parameterMetaObject == null) {
         return null;
       }
 
+      // 参数存在类型处理器并且参数中不存在 getter 方法, 返回原始对象
       if (fallbackParameterObject && !parameterMetaObject.hasGetter(strKey)) {
         return parameterMetaObject.getOriginalObject();
       } else {
+        // 从参数中获取
         // issue #61 do not modify the context when reading
         return parameterMetaObject.getValue(strKey);
       }

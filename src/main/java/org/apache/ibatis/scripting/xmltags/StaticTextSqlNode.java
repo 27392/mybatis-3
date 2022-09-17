@@ -16,7 +16,7 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
- * 静态 SQL 节点 (不包含任何的子节点和`${}`)
+ * 纯文本但并不包含 `${}` 的节点
  *
  * @see TextSqlNode
  * @author Clinton Begin

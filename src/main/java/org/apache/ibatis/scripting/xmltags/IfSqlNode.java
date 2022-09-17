@@ -16,7 +16,7 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
- * <if> 节点
+ * 对应 <if> 节点
  *
  * @author Clinton Begin
  */

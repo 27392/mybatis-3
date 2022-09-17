@@ -21,6 +21,10 @@ import java.util.List;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 对应 <where> 节点
+ *
+ * 继承于{@link TrimSqlNode}
+ *
  * @author Clinton Begin
  */
 public class WhereSqlNode extends TrimSqlNode {
@@ -28,6 +32,7 @@ public class WhereSqlNode extends TrimSqlNode {
   private static List<String> prefixList = Arrays.asList("AND ","OR ","AND\n", "OR\n", "AND\r", "OR\r", "AND\t", "OR\t");
 
   public WhereSqlNode(Configuration configuration, SqlNode contents) {
+    // 前缀 WHERE, 如果SQL片段开头出现 AND OR 的情况下会将其删除
     super(configuration, contents, "WHERE", prefixList, null, null);
   }
 

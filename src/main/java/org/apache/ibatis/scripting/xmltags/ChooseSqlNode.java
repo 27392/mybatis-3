@@ -18,10 +18,32 @@ package org.apache.ibatis.scripting.xmltags;
 import java.util.List;
 
 /**
+ * 对应 <choose> 节点
+ *
+ * <select id="findActiveBlogLike" resultType="Blog">
+ *   SELECT * FROM BLOG WHERE state = ‘ACTIVE’
+ *   <choose>
+ *     <when test="title != null">
+ *       AND title like #{title}
+ *     </when>
+ *     <when test="author != null and author.name != null">
+ *       AND author_name like #{author.name}
+ *     </when>
+ *     <otherwise>
+ *       AND featured = 1
+ *     </otherwise>
+ *   </choose>
+ * </select>
+ *
+ * @link {https://mybatis.org/mybatis-3/zh/dynamic-sql.html#choose%E3%80%81when%E3%80%81otherwise}
+ *
  * @author Clinton Begin
  */
 public class ChooseSqlNode implements SqlNode {
+
+  // otherwise 对应的 SQL 节点
   private final SqlNode defaultSqlNode;
+  // <when> 对应的 SQL 节点
   private final List<SqlNode> ifSqlNodes;
 
   public ChooseSqlNode(List<SqlNode> ifSqlNodes, SqlNode defaultSqlNode) {
