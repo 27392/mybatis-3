@@ -24,9 +24,11 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * BoundSql
  *
- * 处理完任何动态内容后，从{@link SqlSource}获得的实际SQL字符串。SQL可能有SQL占位符“?”和一个参数映射列表(有序)，其
- * 中包含每个参数的附加信息(至少是要从中读取值的输入对象的属性名)。<p>还可以有由动态语言创建的附加参数(对于循环，bind…)
+ * 保存了可运行的 SQL 语句(可能包含`?`){@link #sql}与参数信息{@link #parameterMappings}.
+ *
+ * 还包含了由(<foreach> 与 <bind> 节点创建的额外参数){@link #additionalParameters}
  *
  * An actual SQL String got from an {@link SqlSource} after having processed any dynamic content.
  * The SQL may have SQL placeholders "?" and an list (ordered) of an parameter mappings
@@ -45,7 +47,7 @@ public class BoundSql {
   private final List<ParameterMapping> parameterMappings;
   // 参数
   private final Object parameterObject;
-  // 额外的参数（一般是使用<foreach>与<bind>节点才存在额外的参数）
+  // 额外的参数（由<foreach>与<bind>节点创建的参数）
   private final Map<String, Object> additionalParameters;
   // additionalParameters 属性对应的 MetaObject 对象
   private final MetaObject metaParameters;
@@ -58,14 +60,29 @@ public class BoundSql {
     this.metaParameters = configuration.newMetaObject(additionalParameters);
   }
 
+  /**
+   * 获取sql
+   *
+   * @return
+   */
   public String getSql() {
     return sql;
   }
 
+  /**
+   * 获取参数映射
+   *
+   * @return
+   */
   public List<ParameterMapping> getParameterMappings() {
     return parameterMappings;
   }
 
+  /**
+   * 获取参数
+   *
+   * @return
+   */
   public Object getParameterObject() {
     return parameterObject;
   }

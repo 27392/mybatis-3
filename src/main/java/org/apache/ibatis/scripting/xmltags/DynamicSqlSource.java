@@ -21,7 +21,7 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
 /**
- * 负责处理动态SQL
+ * 负责处理动态SQL语句
  *
  * @see SqlSourceBuilder
  * @author Clinton Begin
