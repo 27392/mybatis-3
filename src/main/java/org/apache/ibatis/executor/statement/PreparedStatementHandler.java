@@ -78,6 +78,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     String sql = boundSql.getSql();
+    // https://blog.csdn.net/qq_39147516/article/details/78439780
     if (mappedStatement.getKeyGenerator() instanceof Jdbc3KeyGenerator) {
       String[] keyColumnNames = mappedStatement.getKeyColumns();
       if (keyColumnNames == null) {

@@ -119,6 +119,7 @@ public class Configuration {
    */
   protected boolean aggressiveLazyLoading;
   protected boolean multipleResultSetsEnabled = true;
+  // 允许 JDBC 支持自动生成主键，需要数据库驱动支持。如果设置为 true，将强制使用自动生成主键; 默认是 false
   protected boolean useGeneratedKeys;
   protected boolean useColumnLabel = true;
   protected boolean cacheEnabled = true;
@@ -126,7 +127,7 @@ public class Configuration {
   protected boolean useActualParamName = true;
   protected boolean returnInstanceForEmptyRow;
   protected boolean shrinkWhitespacesInSql;
-  // 为 'foreach' 标签的 'nullable' 属性指定默认值。（新增于 3.5.9）
+  // 为 <foreach> 标签的 nullable 属性指定默认值。（新增于 3.5.9）; 默认是 false
   protected boolean nullableOnForEach;
 
   // 日志前缀

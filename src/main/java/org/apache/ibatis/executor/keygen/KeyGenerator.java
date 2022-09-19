@@ -21,7 +21,11 @@ import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
 
 /**
- * 主键生成器接口
+ * 主键生成器接口(子类全部使用饿汉单例模式)
+ *
+ * @see Jdbc3KeyGenerator   用于获取插入数据后的自增主键数值。
+ * @see SelectKeyGenerator  某些数据库不支持自增主键，需要手动填写主键字段，
+ * @see NoKeyGenerator      是一个空实现
  *
  * @author Clinton Begin
  */

@@ -44,6 +44,8 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.apache.ibatis.util.MapUtil;
 
 /**
+ * Jdbc3KeyGenerator 用于获取插入数据后的自增主键数值
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -72,10 +74,12 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
   }
 
   public void processBatch(MappedStatement ms, Statement stmt, Object parameter) {
+    // 获取主键字段
     final String[] keyProperties = ms.getKeyProperties();
     if (keyProperties == null || keyProperties.length == 0) {
       return;
     }
+    // 获取数据自增主键，如果没有生成主键，则返回结果集为空
     try (ResultSet rs = stmt.getGeneratedKeys()) {
       final ResultSetMetaData rsmd = rs.getMetaData();
       final Configuration configuration = ms.getConfiguration();
