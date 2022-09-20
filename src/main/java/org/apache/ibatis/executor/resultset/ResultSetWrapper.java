@@ -189,6 +189,12 @@ public class ResultSetWrapper {
     return handler;
   }
 
+  /**
+   * 将 className 解析成 Class 对象
+   *
+   * @param className
+   * @return
+   */
   private Class<?> resolveClass(String className) {
     try {
       // #699 className could be null
