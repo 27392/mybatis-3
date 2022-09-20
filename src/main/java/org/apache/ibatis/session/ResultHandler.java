@@ -16,6 +16,10 @@
 package org.apache.ibatis.session;
 
 /**
+ * 结果处理器
+ *
+ * @see org.apache.ibatis.executor.result.DefaultResultHandler
+ * @see org.apache.ibatis.executor.result.DefaultMapResultHandler
  * @author Clinton Begin
  */
 public interface ResultHandler<T> {

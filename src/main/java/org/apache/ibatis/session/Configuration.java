@@ -102,16 +102,11 @@ public class Configuration {
 
   // 环境对象 (包含事务工厂, 数据源)
   protected Environment environment;
-
-  /**
-   * 是否允许在嵌套语句中使用分页（RowBounds）。如果允许使用则设置为 false。
-   */
+  // 是否允许在嵌套语句中使用分页（RowBounds）; 默认是 false
   protected boolean safeRowBoundsEnabled;
-
-  /**
-   * 是否允许在嵌套语句中使用结果处理器（ResultHandler）。如果允许使用则设置为 false。
-   */
+  // 是否允许在嵌套语句中使用结果处理器（ResultHandler）; 默认是 true
   protected boolean safeResultHandlerEnabled = true;
+  // 是否开启驼峰命名自动映射，即从经典数据库列名 A_COLUMN 映射到经典 Java 属性名 aColumn; 默认是 false
   protected boolean mapUnderscoreToCamelCase;
 
   /**
@@ -121,10 +116,13 @@ public class Configuration {
   protected boolean multipleResultSetsEnabled = true;
   // 允许 JDBC 支持自动生成主键，需要数据库驱动支持。如果设置为 true，将强制使用自动生成主键; 默认是 false
   protected boolean useGeneratedKeys;
+  // 使用列标签代替列名; 默认是 true
   protected boolean useColumnLabel = true;
   protected boolean cacheEnabled = true;
+  // 指定当结果集中值为 null 的时候是否调用映射对象的 setter（map 对象时为 put）方法，这在依赖于 Map.keySet() 或 null 值进行初始化时比较有用。注意基本类型（int、boolean 等）是不能设置成 null 的; 默认 false
   protected boolean callSettersOnNulls;
   protected boolean useActualParamName = true;
+  // 当返回行的所有列都是空时，MyBatis默认返回 null。 当开启这个设置时，MyBatis会返回一个空实例。 请注意，它也适用于嵌套的结果集（如集合或关联）; 默认是 false
   protected boolean returnInstanceForEmptyRow;
   protected boolean shrinkWhitespacesInSql;
   // 为 <foreach> 标签的 nullable 属性指定默认值。（新增于 3.5.9）; 默认是 false

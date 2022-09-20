@@ -23,14 +23,41 @@ import java.util.List;
 import org.apache.ibatis.cursor.Cursor;
 
 /**
+ * 结果集处理器 （将 ResultSet 按照 ResetMap 的映射规则完成对象的映射）
+ *
+ * 负责映射 select 语句查询得到的结果集
+ *
+ * @see DefaultResultSetHandler 默认实现类
  * @author Clinton Begin
  */
 public interface ResultSetHandler {
 
+  /**
+   * 处理结果集，生成相应的结果对象集合
+   *
+   * @param stmt
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   <E> List<E> handleResultSets(Statement stmt) throws SQLException;
 
+  /**
+   * 处理结果集，返回相应的游标对象
+   *
+   * @param stmt
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   <E> Cursor<E> handleCursorResultSets(Statement stmt) throws SQLException;
 
+  /**
+   * 处理存储过程的输出参数
+   *
+   * @param cs
+   * @throws SQLException
+   */
   void handleOutputParameters(CallableStatement cs) throws SQLException;
 
 }

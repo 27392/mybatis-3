@@ -18,12 +18,17 @@ package org.apache.ibatis.executor.result;
 import org.apache.ibatis.session.ResultContext;
 
 /**
+ * 默认的结果对象上下文
+ *
  * @author Clinton Begin
  */
 public class DefaultResultContext<T> implements ResultContext<T> {
 
+  // 暂存的对象
   private T resultObject;
+  // 暂存对象的个数
   private int resultCount;
+  // 控制是否停止映射
   private boolean stopped;
 
   public DefaultResultContext() {
@@ -48,6 +53,7 @@ public class DefaultResultContext<T> implements ResultContext<T> {
   }
 
   public void nextResultObject(T resultObject) {
+    // 暂存数量递增
     resultCount++;
     this.resultObject = resultObject;
   }

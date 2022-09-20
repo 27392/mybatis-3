@@ -66,7 +66,7 @@ public class ResultMapping {
   // 构造参数标识(ID, CONSTRUCTOR)
   private List<ResultFlag> flags;
 
-  // column 属性拆分后的结果,
+  // column 属性拆分后的结果; (使用嵌套查询时传递多个参数. column="{prop1=col1,prop2=col2}")
   private List<ResultMapping> composites;
 
   // resultSet 属性; (处理使用存储过程时存在多结果集)

@@ -546,7 +546,8 @@ public class MapperBuilderAssistant extends BaseBuilder {
     List<ResultMap> resultMaps = new ArrayList<>();
     // 指定了 resultMap 属性
     if (resultMap != null) {
-      // 将名称使用逗号拆分
+      // https://zhuanlan.zhihu.com/p/72982781
+      // 将名称使用逗号拆分 (如果配置了多个 resetMap 则表示该 SQL 语句能产生多个 ResultSet)
       String[] resultMapNames = resultMap.split(",");
       // 从 Configuration 对象中获取 ResultMap 并添加到集合中
       for (String resultMapName : resultMapNames) {

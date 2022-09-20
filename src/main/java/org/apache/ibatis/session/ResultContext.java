@@ -16,16 +16,39 @@
 package org.apache.ibatis.session;
 
 /**
+ * 结果上下文
+ *
+ * 配合{@link ResultHandler} 一起使用
+ *
+ * @see org.apache.ibatis.executor.result.DefaultResultContext
  * @author Clinton Begin
  */
 public interface ResultContext<T> {
 
+  /**
+   * 获取暂存的结果对象
+   *
+   * @return
+   */
   T getResultObject();
 
+  /**
+   * 暂存对象的个数
+   *
+   * @return
+   */
   int getResultCount();
 
+  /**
+   * 是否停止
+   *
+   * @return
+   */
   boolean isStopped();
 
+  /**
+   * 停止
+   */
   void stop();
 
 }
