@@ -18,27 +18,37 @@ package org.apache.ibatis.cursor;
 import java.io.Closeable;
 
 /**
+ * 游标接口
+ *
+ * 游标使用迭代器惰性地处理获取项。游标是一个完美的适合处理数百万项查询，通常不适合在内存中
+ *
  * Cursor contract to handle fetching items lazily using an Iterator.
  * Cursors are a perfect fit to handle millions of items queries that would not normally fits in memory.
  * If you use collections in resultMaps then cursor SQL queries must be ordered (resultOrdered="true")
  * using the id columns of the resultMap.
  *
+ * @see org.apache.ibatis.cursor.defaults.DefaultCursor
  * @author Guillaume Darmont / guillaume@dropinocean.com
  */
 public interface Cursor<T> extends Closeable, Iterable<T> {
 
   /**
+   * 游标是否开启
+   *
    * @return true if the cursor has started to fetch items from database.
    */
   boolean isOpen();
 
   /**
+   * 游标是否消费完成
    *
    * @return true if the cursor is fully consumed and has returned all elements matching the query.
    */
   boolean isConsumed();
 
   /**
+   * 获取当前元素索引.第一项的索引为0
+   *
    * Get the current item index. The first item has the index 0.
    *
    * @return -1 if the first cursor item has not been retrieved. The index of the current item retrieved.

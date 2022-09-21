@@ -257,17 +257,24 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   public <E> Cursor<E> handleCursorResultSets(Statement stmt) throws SQLException {
     ErrorContext.instance().activity("handling cursor results").object(mappedStatement.getId());
 
+    // 获取第一个 ResultSet 对象(可能存在多个 ResultSet 的情况)
     ResultSetWrapper rsw = getFirstResultSet(stmt);
 
+    // 获取 ResultMap 集合 (如果存在 ResultSet 的情况可以在配置 <resultMap id="result1,result2">)
     List<ResultMap> resultMaps = mappedStatement.getResultMaps();
 
+    // ResultMap 的数量
     int resultMapCount = resultMaps.size();
+    // 校验 ResultMap 集合是否为空；为空会抛出异常
     validateResultMapsCount(rsw, resultMapCount);
+    // 检查是否只有一个 ResultMap
     if (resultMapCount != 1) {
       throw new ExecutorException("Cursor results cannot be mapped to multiple resultMaps");
     }
 
+    // 使用第一个 ResultMap 对象
     ResultMap resultMap = resultMaps.get(0);
+    // 创建 DefaultCursor 返回
     return new DefaultCursor<>(this, resultMap, rsw, rowBounds);
   }
 
