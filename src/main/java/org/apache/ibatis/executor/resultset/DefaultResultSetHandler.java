@@ -97,7 +97,9 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private final ReflectorFactory reflectorFactory;
 
   // nested resultmaps
+  // 记录嵌套循环所有结果对象
   private final Map<CacheKey, Object> nestedResultObjects = new HashMap<>();
+  // 处理嵌套查询循环引用(key 是 resultMap.id)
   private final Map<String, Object> ancestorObjects = new HashMap<>();
   private Object previousRowValue;
 
@@ -615,11 +617,11 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     if (rowValue != null) {
       // 3.1 创建创建外层对象对应的 MetaObject 对象
       final MetaObject metaObject = configuration.newMetaObject(rowValue);
-      // 3.2 将外层对象添加到 ancestorObjects 属性中
+      // 3.2 将外层对象添加到 ancestorObjects 属性中 (处理循环引用问题)
       putAncestor(rowValue, resultMapId);
       // 3.3 处理嵌套类型
       applyNestedResultMappings(rsw, resultMap, metaObject, columnPrefix, combinedKey, false);
-      // 3.4 将外层对象从 ancestorObjects 中删除
+      // 3.4 将外层对象从 ancestorObjects 中删除 (处理循环引用问题)
       ancestorObjects.remove(resultMapId);
     } else {
       final ResultLoaderMap lazyLoader = new ResultLoaderMap();
@@ -637,11 +639,11 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         }
         // 2.3 处理 ResultMap 中明确指定需要映射
         foundValues = applyPropertyMappings(rsw, resultMap, metaObject, lazyLoader, columnPrefix) || foundValues;
-        // 2.4 将对象添加到 ancestorObjects 属性中
+        // 2.4 将对象添加到 ancestorObjects 属性中 (处理循环引用问题)
         putAncestor(rowValue, resultMapId);
         // 2.5 处理嵌套映射
         foundValues = applyNestedResultMappings(rsw, resultMap, metaObject, columnPrefix, combinedKey, true) || foundValues;
-        // 2.6 将外层对象从 ancestorObjects 中删除
+        // 2.6 将外层对象从 ancestorObjects 中删除 (处理循环引用问题)
         ancestorObjects.remove(resultMapId);
 
         // 2.7 如果没有映射任何的属性, 则根据 returnInstanceForEmptyRow 配置决定返回空对象还是 null
@@ -657,7 +659,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   }
 
   /**
-   * 记录TODO
+   * 将对象记录到 ancestorObjects 中(主要用来处理嵌套循环引用)
    *
    * @param resultObject
    * @param resultMapId
@@ -1488,13 +1490,14 @@ public class DefaultResultSetHandler implements ResultSetHandler {
           // 2. 确定嵌套类型使用的 ResultMap 对象
           final ResultMap nestedResultMap = getNestedResultMap(rsw.getResultSet(), nestedResultMapId, columnPrefix);
 
-          // 3. 处理循环引用问题
+          // 3. 处理循环引用的情况
           if (resultMapping.getColumnPrefix() == null) {
             // try to fill circular reference only when columnPrefix
             // is not specified for the nested result map (issue #215)
             Object ancestorObject = ancestorObjects.get(nestedResultMapId);
             if (ancestorObject != null) {
               if (newObject) {
+                // 从 ancestorObjects 中获取对象放入外层对象中
                 linkObjects(metaObject, resultMapping, ancestorObject); // issue #385
               }
               continue;
@@ -1793,12 +1796,22 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     }
   }
 
+  /**
+   * 将嵌套结果对象设置到外层对象中
+   *
+   * @param metaObject
+   * @param resultMapping
+   * @param rowValue
+   */
   private void linkObjects(MetaObject metaObject, ResultMapping resultMapping, Object rowValue) {
+    // 初始化外层对象中的 Collection 类型的属性
     final Object collectionProperty = instantiateCollectionPropertyIfAppropriate(resultMapping, metaObject);
     if (collectionProperty != null) {
+      // <collection>
       final MetaObject targetMetaObject = configuration.newMetaObject(collectionProperty);
       targetMetaObject.add(rowValue);
     } else {
+      // <association>
       metaObject.setValue(resultMapping.getProperty(), rowValue);
     }
   }
