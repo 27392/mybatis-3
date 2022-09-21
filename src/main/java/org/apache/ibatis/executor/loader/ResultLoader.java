@@ -35,22 +35,37 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
 
 /**
+ * ResultLoader
+ *
+ * 保存了延迟加载操作所需的全部信息
+ *
  * @author Clinton Begin
  */
 public class ResultLoader {
 
+  // Configuration 对象
   protected final Configuration configuration;
+  // Executor 对象
   protected final Executor executor;
+  // MappedStatement 对象
   protected final MappedStatement mappedStatement;
+  // 参数
   protected final Object parameterObject;
+  // 结果类型
   protected final Class<?> targetType;
+  // ObjectFactory 对象
   protected final ObjectFactory objectFactory;
+  // CacheKey 对象
   protected final CacheKey cacheKey;
+  // BoundSql 对象
   protected final BoundSql boundSql;
+  // ResultExtractor 对象 (负责将加载后的结果转换成 targetType 类型)
   protected final ResultExtractor resultExtractor;
+  // 创建对象时的线程id
   protected final long creatorThreadId;
-
+  // 暂时没有用上
   protected boolean loaded;
+  // 结果对象
   protected Object resultObject;
 
   public ResultLoader(Configuration config, Executor executor, MappedStatement mappedStatement, Object parameterObject, Class<?> targetType, CacheKey cacheKey, BoundSql boundSql) {
@@ -67,15 +82,23 @@ public class ResultLoader {
   }
 
   /**
-   * 加载延迟结果
+   * 加载结果
    */
   public Object loadResult() throws SQLException {
     // 查询结果
     List<Object> list = selectList();
+    // 将结果转换成 targetType 类型
     resultObject = resultExtractor.extractObjectFromList(list, targetType);
     return resultObject;
   }
 
+  /**
+   * 查询结果
+   *
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   private <E> List<E> selectList() throws SQLException {
     Executor localExecutor = executor;
     // 判断创建对象的与现在调用的线程是否是同一个或者创建对象时的执行器已经关闭
@@ -84,7 +107,7 @@ public class ResultLoader {
       localExecutor = newExecutor();
     }
     try {
-      // 调用执行器查询结果
+      // 调用 Executor 查询结果
       return localExecutor.query(mappedStatement, parameterObject, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER, cacheKey, boundSql);
     } finally {
       // 如果是新创建的执行器则需要手动关闭
@@ -94,6 +117,10 @@ public class ResultLoader {
     }
   }
 
+  /**
+   * 创建 Executor 对象
+   * @return
+   */
   private Executor newExecutor() {
     final Environment environment = configuration.getEnvironment();
     if (environment == null) {
@@ -108,6 +135,11 @@ public class ResultLoader {
     return configuration.newExecutor(tx, ExecutorType.SIMPLE);
   }
 
+  /**
+   * 结果是否为空
+   *
+   * @return
+   */
   public boolean wasNull() {
     return resultObject == null;
   }

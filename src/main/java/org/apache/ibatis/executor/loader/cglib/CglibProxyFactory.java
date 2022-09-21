@@ -40,6 +40,8 @@ import org.apache.ibatis.reflection.property.PropertyNamer;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * cglib 代理实现
+ *
  * @author Clinton Begin
  */
 public class CglibProxyFactory implements ProxyFactory {

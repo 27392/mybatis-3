@@ -680,7 +680,6 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     if (resultMap.getAutoMapping() != null) {
       return resultMap.getAutoMapping();
     } else {
-      // todo
       if (isNested) {
         return AutoMappingBehavior.FULL == configuration.getAutoMappingBehavior();
       } else {
@@ -769,7 +768,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
    */
   private Object getPropertyMappingValue(ResultSet rs, MetaObject metaResultObject, ResultMapping propertyMapping, ResultLoaderMap lazyLoader, String columnPrefix)
       throws SQLException {
-    // 判断是否存在嵌套查询
+
     if (propertyMapping.getNestedQueryId() != null) {
       // 获取嵌套查询的属性值
       return getNestedQueryMappingValue(rs, metaResultObject, propertyMapping, lazyLoader, columnPrefix);
@@ -954,25 +953,23 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private Object createResultObject(ResultSetWrapper rsw, ResultMap resultMap, ResultLoaderMap lazyLoader, String columnPrefix) throws SQLException {
     // 标识结果对象是否是否由构造函数创建
     this.useConstructorMappings = false; // reset previous mapping result
-    // 记录构造函数的参数类型
+    // 记录构造函数的参数类型 (用于创建动态代理对象)
     final List<Class<?>> constructorArgTypes = new ArrayList<>();
-    // 记录构造函数的参数
+    // 记录构造函数的参数 (用于创建动态代理对象)
     final List<Object> constructorArgs = new ArrayList<>();
 
     // 创建当前行对应的结果对象 (如果由构造方法创建则会将构造参数类型与属性值记录到 constructorArgTypes 与 constructorArgs 中)
     Object resultObject = createResultObject(rsw, resultMap, constructorArgTypes, constructorArgs, columnPrefix);
 
-    // todo
     if (resultObject != null && !hasTypeHandlerForResultObject(rsw, resultMap.getType())) {
       // 获取结果集映射集合
       final List<ResultMapping> propertyMappings = resultMap.getPropertyResultMappings();
       // 遍历
       for (ResultMapping propertyMapping : propertyMappings) {
         // issue gcode #109 && issue #149
-        // [延迟加载] 如果存在嵌套查询,并且是延迟加载.那么创建代理对象并返回
+        // 如果存在嵌套查询, 并且是延迟加载. 那么创建代理对象并返回
         if (propertyMapping.getNestedQueryId() != null && propertyMapping.isLazy()) {
-
-          // [延迟加载] 创建代理对象
+          // 创建代理对象
           resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
           break;
         }
@@ -1046,10 +1043,10 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       final Object value;
       try {
         if (constructorMapping.getNestedQueryId() != null) {
-          // 存在嵌套查询 todo
+          // 获取嵌套查询的参数值
           value = getNestedQueryConstructorValue(rsw.getResultSet(), constructorMapping, columnPrefix);
         } else if (constructorMapping.getNestedResultMapId() != null) {
-          // 存在嵌套映射 todo
+          // 获取嵌套映射的参数值
           final ResultMap resultMap = configuration.getResultMap(constructorMapping.getNestedResultMapId());
           value = getRowValue(rsw, resultMap, getColumnPrefix(columnPrefix, constructorMapping));
         } else {
@@ -1212,62 +1209,91 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   // NESTED QUERY
   //
 
+  /**
+   * 获取嵌套查询构造函数的值
+   *
+   * @param rs
+   * @param constructorMapping
+   * @param columnPrefix
+   * @return
+   * @throws SQLException
+   */
   private Object getNestedQueryConstructorValue(ResultSet rs, ResultMapping constructorMapping, String columnPrefix) throws SQLException {
+    // 获取嵌套查询的查询id
     final String nestedQueryId = constructorMapping.getNestedQueryId();
+    // 获取嵌套查询的 MappedStatement
     final MappedStatement nestedQuery = configuration.getMappedStatement(nestedQueryId);
+
+    // 获取传递给嵌套查询的参数值
     final Class<?> nestedQueryParameterType = nestedQuery.getParameterMap().getType();
     final Object nestedQueryParameterObject = prepareParameterForNestedQuery(rs, constructorMapping, nestedQueryParameterType, columnPrefix);
+
     Object value = null;
     if (nestedQueryParameterObject != null) {
+      // 获取嵌套查询对应的 BoundSql
       final BoundSql nestedBoundSql = nestedQuery.getBoundSql(nestedQueryParameterObject);
+      // 创建嵌套查询对应的 CacheKey
       final CacheKey key = executor.createCacheKey(nestedQuery, nestedQueryParameterObject, RowBounds.DEFAULT, nestedBoundSql);
+      // 获取嵌套查询的映射类型
       final Class<?> targetType = constructorMapping.getJavaType();
+      // 创建 ResultLoader 对象
       final ResultLoader resultLoader = new ResultLoader(configuration, executor, nestedQuery, nestedQueryParameterObject, targetType, key, nestedBoundSql);
+      // 调用 ResultLoader.loadResult() 执行嵌套查询, 得到相应的构造方法参数值
       value = resultLoader.loadResult();
     }
     return value;
   }
 
   /**
-   * 获取嵌套查询的值
+   * 获取嵌套查询的属性值
+   *
+   * @see #getNestedQueryConstructorValue(ResultSet, ResultMapping, String)
+   * @param rs
+   * @param metaResultObject
+   * @param propertyMapping
+   * @param lazyLoader
+   * @param columnPrefix
+   * @return
+   * @throws SQLException
    */
   private Object getNestedQueryMappingValue(ResultSet rs, MetaObject metaResultObject, ResultMapping propertyMapping, ResultLoaderMap lazyLoader, String columnPrefix)
       throws SQLException {
 
-    // 嵌套查询的MappedStatementId
+    // 嵌套查询的 MappedStatement.Id
     final String nestedQueryId = propertyMapping.getNestedQueryId();
-
     // 嵌套查询的属性名
     final String property = propertyMapping.getProperty();
-
-    // 获取嵌套查询的MappedStatement
+    // 获取嵌套查询的 MappedStatement
     final MappedStatement nestedQuery = configuration.getMappedStatement(nestedQueryId);
 
+    // 获取嵌套查询
     final Class<?> nestedQueryParameterType = nestedQuery.getParameterMap().getType();
     final Object nestedQueryParameterObject = prepareParameterForNestedQuery(rs, propertyMapping, nestedQueryParameterType, columnPrefix);
+
     Object value = null;
     if (nestedQueryParameterObject != null) {
-      // 获取boundSql
+      // 获取嵌套查询的 BoundSql
       final BoundSql nestedBoundSql = nestedQuery.getBoundSql(nestedQueryParameterObject);
-      // 创建缓存key
+      // 创建嵌套查询对应的 CacheKey
       final CacheKey key = executor.createCacheKey(nestedQuery, nestedQueryParameterObject, RowBounds.DEFAULT, nestedBoundSql);
+      // 获取嵌套查询对应的映射类型
       final Class<?> targetType = propertyMapping.getJavaType();
 
+      // 检查缓存中是否存在该嵌套查询的结果集
       if (executor.isCached(nestedQuery, key)) {
         executor.deferLoad(nestedQuery, metaResultObject, property, key, targetType);
         value = DEFERRED;
       } else {
-        // 创建结果加载对象(包含加载逻辑)
+        // 创建 ResultLoader 对象
         final ResultLoader resultLoader = new ResultLoader(configuration, executor, nestedQuery, nestedQueryParameterObject, targetType, key, nestedBoundSql);
 
-        // 如果是延迟加载
         if (propertyMapping.isLazy()) {
-          // 将结果对象存再延迟加载器中
+          // 如果该映射配置了延迟加载,则将其添加到 ResultLoaderMap 中, 等待真正使用时再执行嵌套查询并得到结果对象
           lazyLoader.addLoader(property, metaResultObject, resultLoader);
-          // 返回默认的object对象
+          // 返回默认的 object 对象
           value = DEFERRED;
         } else {
-          // 否则立即加载
+          // 没有配置延迟加载,则直接调用 loadResult() 方法执行嵌套查询，并得到结果对象
           value = resultLoader.loadResult();
         }
       }
@@ -1275,41 +1301,94 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     return value;
   }
 
+  /**
+   * 获取嵌套查询的参数值
+   *
+   * @see #prepareCompositeKeyParameter  处理多个传递属性
+   * @see #prepareSimpleKeyParameter     处理单个传递属性
+   * @param rs
+   * @param resultMapping
+   * @param parameterType
+   * @param columnPrefix
+   * @return
+   * @throws SQLException
+   */
   private Object prepareParameterForNestedQuery(ResultSet rs, ResultMapping resultMapping, Class<?> parameterType, String columnPrefix) throws SQLException {
+    // 是否是传递多个参数的方式
     if (resultMapping.isCompositeResult()) {
+      // 处理多个参数
       return prepareCompositeKeyParameter(rs, resultMapping, parameterType, columnPrefix);
     } else {
+      // 处理单一的参数
       return prepareSimpleKeyParameter(rs, resultMapping, parameterType, columnPrefix);
     }
   }
 
+  /**
+   * 获取嵌套查询的参数值(单一参数)
+   *
+   * @param rs
+   * @param resultMapping
+   * @param parameterType
+   * @param columnPrefix
+   * @return
+   * @throws SQLException
+   */
   private Object prepareSimpleKeyParameter(ResultSet rs, ResultMapping resultMapping, Class<?> parameterType, String columnPrefix) throws SQLException {
     final TypeHandler<?> typeHandler;
+    // 获取 typeHandler
     if (typeHandlerRegistry.hasTypeHandler(parameterType)) {
       typeHandler = typeHandlerRegistry.getTypeHandler(parameterType);
     } else {
       typeHandler = typeHandlerRegistry.getUnknownTypeHandler();
     }
+    // 使用 typeHandler 获取参数值
     return typeHandler.getResult(rs, prependPrefix(resultMapping.getColumn(), columnPrefix));
   }
 
+  /**
+   * 获取嵌套查询的参数值(多个参数)
+   *
+   * @param rs
+   * @param resultMapping
+   * @param parameterType
+   * @param columnPrefix
+   * @return
+   * @throws SQLException
+   */
   private Object prepareCompositeKeyParameter(ResultSet rs, ResultMapping resultMapping, Class<?> parameterType, String columnPrefix) throws SQLException {
+    // 初始化嵌套查询参数对象
     final Object parameterObject = instantiateParameterObject(parameterType);
+    // 创建嵌套查询对象对应的 MetaObject 对象
     final MetaObject metaObject = configuration.newMetaObject(parameterObject);
+    // 标识是否获取到属性值
     boolean foundValues = false;
+
+    // 遍历传递的参数
     for (ResultMapping innerResultMapping : resultMapping.getComposites()) {
+      // 获取参数的值
       final Class<?> propType = metaObject.getSetterType(innerResultMapping.getProperty());
       final TypeHandler<?> typeHandler = typeHandlerRegistry.getTypeHandler(propType);
       final Object propValue = typeHandler.getResult(rs, prependPrefix(innerResultMapping.getColumn(), columnPrefix));
+
+      // 将参数值设置到嵌套查询参数对象中
       // issue #353 & #560 do not execute nested query if key is null
       if (propValue != null) {
         metaObject.setValue(innerResultMapping.getProperty(), propValue);
+        // 修改 foundValues 标识
         foundValues = true;
       }
     }
+    // 如果没有找到参数值返回 null
     return foundValues ? parameterObject : null;
   }
 
+  /**
+   * 初始化嵌套查询参数对象
+   *
+   * @param parameterType
+   * @return
+   */
   private Object instantiateParameterObject(Class<?> parameterType) {
     if (parameterType == null) {
       return new HashMap<>();

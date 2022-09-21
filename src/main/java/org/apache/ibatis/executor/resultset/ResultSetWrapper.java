@@ -136,7 +136,8 @@ public class ResultSetWrapper {
   }
 
   /**
-   * Todo
+   * 获取 TypeHandler
+   *
    * Gets the type handler to use when reading the result set.
    * Tries to get from the TypeHandlerRegistry by searching for the property type.
    * If not found it gets the column JDBC type and tries to get a handler for it.

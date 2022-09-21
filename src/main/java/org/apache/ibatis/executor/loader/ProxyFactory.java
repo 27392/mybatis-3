@@ -22,14 +22,36 @@ import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 代理工厂
+ *
+ * 默认使用 javassist {@link Configuration#setProxyFactory(ProxyFactory) }
+ *
+ * @see org.apache.ibatis.executor.loader.javassist.JavassistProxyFactory  javassist 实现
+ * @see org.apache.ibatis.executor.loader.cglib.CglibProxyFactory          cglib     实现
  * @author Eduardo Macarron
  */
 public interface ProxyFactory {
 
+  /**
+   * 设置属性信息
+   *
+   * @param properties
+   */
   default void setProperties(Properties properties) {
     // NOP
   }
 
+  /**
+   * 创建代理对象
+   *
+   * @param target
+   * @param lazyLoader
+   * @param configuration
+   * @param objectFactory
+   * @param constructorArgTypes
+   * @param constructorArgs
+   * @return
+   */
   Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs);
 
 }

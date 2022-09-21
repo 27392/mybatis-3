@@ -109,9 +109,7 @@ public class Configuration {
   // 是否开启驼峰命名自动映射，即从经典数据库列名 A_COLUMN 映射到经典 Java 属性名 aColumn; 默认是 false
   protected boolean mapUnderscoreToCamelCase;
 
-  /**
-   * [延迟加载] 开启时，任一方法的调用都会加载该对象的所有延迟加载属性。 否则，每个延迟加载属性会按需加载
-   */
+  // 开启时，任一方法的调用都会加载该对象的所有延迟加载属性。 否则，每个延迟加载属性会按需加载; 默认是 false （在 3.4.1 及之前的版本中默认为 true）
   protected boolean aggressiveLazyLoading;
   protected boolean multipleResultSetsEnabled = true;
   // 允许 JDBC 支持自动生成主键，需要数据库驱动支持。如果设置为 true，将强制使用自动生成主键; 默认是 false
@@ -138,9 +136,7 @@ public class Configuration {
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
 
-  /**
-   * [延迟加载] 指定对象的哪些方法触发一次延迟加载。
-   */
+  // 指定对象的哪些方法触发一次延迟加载; 默认 (equals,clone,hashCode,toString)
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
   protected Integer defaultStatementTimeout;
   protected Integer defaultFetchSize;
@@ -160,10 +156,7 @@ public class Configuration {
 
   // 延迟加载的全局开关。当开启时，所有关联对象都会延迟加载。 特定关联关系中可通过设置 fetchType 属性来覆盖该项的开关状态。
   protected boolean lazyLoadingEnabled = false;
-
-  /**
-   * [延迟加载] 代理工厂(只要用来做延迟加载)。默认是JavassistProxyFactory
-   */
+  // 代理工厂(主要用来做延迟加载)。默认是 JavassistProxyFactory
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
   // 当前使用的数据库 ID

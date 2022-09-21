@@ -39,6 +39,8 @@ import org.apache.ibatis.reflection.property.PropertyNamer;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * javassist 代理实现
+ *
  * @author Eduardo Macarron
  */
 public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.ProxyFactory {
@@ -63,6 +65,15 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
     return EnhancedDeserializationProxyImpl.createProxy(target, unloadedProperties, objectFactory, constructorArgTypes, constructorArgs);
   }
 
+  /**
+   * 创建代理对象
+   *
+   * @param type
+   * @param callback
+   * @param constructorArgTypes
+   * @param constructorArgs
+   * @return
+   */
   static Object crateProxy(Class<?> type, MethodHandler callback, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
 
     ProxyFactory enhancer = new ProxyFactory();
@@ -93,24 +104,22 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
   }
 
   /**
-   * [延迟加载] 与Cglib的MethodInterceptor是类似的功能
+   * 与 {@link org.apache.ibatis.executor.loader.cglib.CglibProxyFactory.EnhancedResultObjectProxyImpl} 是类似的功能
    */
   private static class EnhancedResultObjectProxyImpl implements MethodHandler {
-
+    /** 目标类类型 */
     private final Class<?> type;
+    /** ResultLoaderMap 对象 */
     private final ResultLoaderMap lazyLoader;
-
-    /**
-     * @see Configuration#aggressiveLazyLoading
-     */
+    /** @see Configuration#aggressiveLazyLoading */
     private final boolean aggressive;
-
-    /**
-     * @see Configuration#lazyLoadTriggerMethods
-     */
+    /** @see Configuration#lazyLoadTriggerMethods  */
     private final Set<String> lazyLoadTriggerMethods;
+    /** ObjectFactory 对象  */
     private final ObjectFactory objectFactory;
+    /** 构造方法的参数类型 */
     private final List<Class<?>> constructorArgTypes;
+    /** 构造方法的参数类型 */
     private final List<Object> constructorArgs;
 
     private EnhancedResultObjectProxyImpl(Class<?> type, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
@@ -123,23 +132,34 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
       this.constructorArgs = constructorArgs;
     }
 
+    /**
+     * 创建代理对象
+     *
+     * @param target
+     * @param lazyLoader
+     * @param configuration
+     * @param objectFactory
+     * @param constructorArgTypes
+     * @param constructorArgs
+     * @return
+     */
     public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+
       // 目标类class
       final Class<?> type = target.getClass();
-
-      // [延迟加载] 创建MethodHandler对象
+      // 创建 MethodHandler 对象
       EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
 
-      // [延迟加载] 创建代理对象
+      // 创建代理对象
       Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
 
-      // [延迟加载] 将属性复制到代理对象中
+      // 将属性复制到代理对象中
       PropertyCopier.copyBeanProperties(type, target, enhanced);
       return enhanced;
     }
 
     /**
-     * [延迟加载] 延迟加载的入口
+     * 延迟加载的入口
      */
     @Override
     public Object invoke(Object enhanced, Method method, Method methodProxy, Object[] args) throws Throwable {
@@ -160,14 +180,14 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
               return original;
             }
           } else {
-            // 判断是否还有延迟加载对象 并且不是finalize方法
+            // 判断是否还有延迟加载对象 并且不是 finalize 方法
             if (lazyLoader.size() > 0 && !FINALIZE_METHOD.equals(methodName)) {
-              // 判断是否设置任意方法调用，或调用到指定的方法加载所有的延迟属性
+              // 判断是否设置任意方法调用或调用到指定的方法加载所有的延迟属性
               if (aggressive || lazyLoadTriggerMethods.contains(methodName)) {
                 // 加载所有的延迟属性
                 lazyLoader.loadAll();
               } else if (PropertyNamer.isSetter(methodName)) {
-                // 如果在延迟加载为生效之前调用setter方法则将延迟加载对象删除
+                // 如果在延迟加载为生效之前调用 setter 方法则将延迟加载对象删除
                 final String property = PropertyNamer.methodToProperty(methodName);
                 // 删除延迟加载对象
                 lazyLoader.remove(property);

@@ -42,13 +42,24 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * ResultLoaderMap 记录了一个对象中所有的延迟加载属性
+ *
+ * @see LoadPair 中记录了主对象信息并包含对应属性的 {@link ResultLoader}
  * @author Clinton Begin
  * @author Franta Mejta
  */
 public class ResultLoaderMap {
 
+  // 记录了属性与 LoadPair 的关系
   private final Map<String, LoadPair> loaderMap = new HashMap<>();
 
+  /**
+   * 添加延迟加载属性
+   *
+   * @param property
+   * @param metaResultObject
+   * @param resultLoader
+   */
   public void addLoader(String property, MetaObject metaResultObject, ResultLoader resultLoader) {
     String upperFirst = getUppercaseFirstProperty(property);
     if (!upperFirst.equalsIgnoreCase(property) && loaderMap.containsKey(upperFirst)) {
@@ -59,18 +70,39 @@ public class ResultLoaderMap {
     loaderMap.put(upperFirst, new LoadPair(property, metaResultObject, resultLoader));
   }
 
+  /**
+   * 获取属性对应关系
+   *
+   * @return
+   */
   public final Map<String, LoadPair> getProperties() {
     return new HashMap<>(this.loaderMap);
   }
 
+  /**
+   * 获取所有的属性名
+   *
+   * @return
+   */
   public Set<String> getPropertyNames() {
     return loaderMap.keySet();
   }
 
+  /**
+   * 延迟加载的数量
+   *
+   * @return
+   */
   public int size() {
     return loaderMap.size();
   }
 
+  /**
+   * 是否存在延迟加载
+   *
+   * @param property
+   * @return
+   */
   public boolean hasLoader(String property) {
     return loaderMap.containsKey(property.toUpperCase(Locale.ENGLISH));
   }
@@ -83,7 +115,7 @@ public class ResultLoaderMap {
    * @throws SQLException
    */
   public boolean load(String property) throws SQLException {
-    // 根据属性名取出延迟加载对象
+    // 根据属性名删除 LoadPair 对象
     LoadPair pair = loaderMap.remove(property.toUpperCase(Locale.ENGLISH));
     if (pair != null) {
       // 调用加载逻辑
@@ -93,24 +125,44 @@ public class ResultLoaderMap {
     return false;
   }
 
+  /**
+   * 删除
+   *
+   * @param property
+   */
   public void remove(String property) {
     loaderMap.remove(property.toUpperCase(Locale.ENGLISH));
   }
 
+  /**
+   * 加载所有的延迟属性
+   *
+   * @throws SQLException
+   */
   public void loadAll() throws SQLException {
     final Set<String> methodNameSet = loaderMap.keySet();
     String[] methodNames = methodNameSet.toArray(new String[methodNameSet.size()]);
+
+    // 遍历加载
     for (String methodName : methodNames) {
       load(methodName);
     }
   }
 
+  /**
+   * 将第一个属性大写
+   *
+   * @param property
+   * @return
+   */
   private static String getUppercaseFirstProperty(String property) {
     String[] parts = property.split("\\.");
     return parts[0].toUpperCase(Locale.ENGLISH);
   }
 
   /**
+   * LoadPair 保存了主对象的信息与对应属性的 ResultLoader
+   *
    * Property which was not loaded yet.
    */
   public static class LoadPair implements Serializable {
@@ -180,6 +232,11 @@ public class ResultLoaderMap {
       }
     }
 
+    /**
+     * 加载
+     *
+     * @throws SQLException
+     */
     public void load() throws SQLException {
       /* These field should not be null unless the loadpair was serialized.
        * Yet in that case this method should not be called. */
@@ -193,7 +250,14 @@ public class ResultLoaderMap {
       this.load(null);
     }
 
+    /**
+     * 加载
+     *
+     * @param userObject
+     * @throws SQLException
+     */
     public void load(final Object userObject) throws SQLException {
+      //
       if (this.metaResultObject == null || this.resultLoader == null) {
         if (this.mappedParameter == null) {
           throw new ExecutorException("Property [" + this.property + "] cannot be loaded because "
@@ -226,10 +290,14 @@ public class ResultLoaderMap {
                 old.parameterObject, old.targetType, old.cacheKey, old.boundSql);
       }
 
-      // 给属性赋值
+      // 调用 ResultLoader.loadResult 方法获取属性值并将其设置到主对象中
       this.metaResultObject.setValue(property, this.resultLoader.loadResult());
     }
 
+    /**
+     * 获取 Configuration 对象
+     * @return
+     */
     private Configuration getConfiguration() {
       if (this.configurationFactory == null) {
         throw new ExecutorException("Cannot get Configuration as configuration factory was not set.");
@@ -282,6 +350,10 @@ public class ResultLoaderMap {
       return Configuration.class.cast(configurationObject);
     }
 
+    /**
+     * 获取 Log 对象
+     * @return
+     */
     private Log getLogger() {
       if (this.log == null) {
         this.log = LogFactory.getLog(this.getClass());
