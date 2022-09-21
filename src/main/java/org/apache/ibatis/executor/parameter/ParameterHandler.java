@@ -15,18 +15,37 @@
  */
 package org.apache.ibatis.executor.parameter;
 
+import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.MappedStatement;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
+ * 参数处理
+ *
  * A parameter handler sets the parameters of the {@code PreparedStatement}.
  *
+ * @see org.apache.ibatis.scripting.defaults.DefaultParameterHandler
+ *
+ * @see org.apache.ibatis.session.Configuration#newParameterHandler(MappedStatement, Object, BoundSql)
  * @author Clinton Begin
  */
 public interface ParameterHandler {
 
+  /**
+   * 获取参数对象
+   *
+   * @return
+   */
   Object getParameterObject();
 
+  /**
+   * 设置参数
+   *
+   * @param ps
+   * @throws SQLException
+   */
   void setParameters(PreparedStatement ps) throws SQLException;
 
 }
