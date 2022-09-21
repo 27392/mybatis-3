@@ -43,9 +43,9 @@ public class BoundSql {
 
   // sql语句
   private final String sql;
-  // 参数映射
+  // 参数映射 (SQL语句中一个 ? 占位符对应一个 ParameterMapping)
   private final List<ParameterMapping> parameterMappings;
-  // 参数
+  // 输入的参数
   private final Object parameterObject;
   // 额外的参数（由<foreach>与<bind>节点创建的参数）
   private final Map<String, Object> additionalParameters;
