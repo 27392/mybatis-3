@@ -31,6 +31,7 @@ import org.apache.ibatis.session.Configuration;
  * 默认的是XML.当然官方也提供了(velocity, thymeleaf, freemarker) 等额外的三种方式支持
  *
  * @see org.apache.ibatis.scripting.xmltags.XMLLanguageDriver
+ * @see Configuration#getDefaultScriptingLanguageInstance()
  */
 public interface LanguageDriver {
 
