@@ -58,7 +58,7 @@ public class ResultSetWrapper {
   // 记录了 ResultSet 中每列对应的 JdbcType 类型
   private final List<JdbcType> jdbcTypes = new ArrayList<>();
 
-  // key 是列名, value
+  // 记录了每列对应的 TypeHandler 对象，key 是列名, value 是 TypeHandler 集合
   private final Map<String, Map<Class<?>, TypeHandler<?>>> typeHandlerMap = new HashMap<>();
   // 记录了以映射的列名，其中 key 是 ResultMap 的 id + 列前缀, value 是列名集合
   private final Map<String, List<String>> mappedColumnNamesMap = new HashMap<>();
