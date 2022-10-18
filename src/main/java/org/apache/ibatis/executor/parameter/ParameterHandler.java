@@ -41,7 +41,7 @@ public interface ParameterHandler {
   Object getParameterObject();
 
   /**
-   * 设置参数
+   * 设置SQL语句参数
    *
    * @param ps
    * @throws SQLException

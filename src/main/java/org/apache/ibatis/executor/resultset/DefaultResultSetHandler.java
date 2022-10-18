@@ -104,7 +104,9 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private Object previousRowValue;
 
   // multiple resultsets
+  // 记录多结果集与 ResultMapping 的关系 (key 是 resultSet, value 是 ResultMapping)
   private final Map<String, ResultMapping> nextResultMaps = new HashMap<>();
+  // 记录多结果的字段信息 (key 是 CacheKey, value 是 PendingRelation集合)
   private final Map<CacheKey, List<PendingRelation>> pendingRelations = new HashMap<>();
 
   // Cached Automappings
@@ -115,8 +117,13 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   // 标识结果对象是否是否由构造函数创建
   private boolean useConstructorMappings;
 
+  /**
+   * 多结果的属性关系
+   */
   private static class PendingRelation {
+    // 结果对象对应的 MetaObject
     public MetaObject metaObject;
+    // 使用了 resultSets 的 ResultMapping
     public ResultMapping propertyMapping;
   }
 
@@ -235,21 +242,29 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       resultSetCount++;
     }
 
+    // 获取 resultSets 属性 (resultSets="names,items")
     String[] resultSets = mappedStatement.getResultSets();
     if (resultSets != null) {
       while (rsw != null && resultSetCount < resultSets.length) {
+        // 根据 resultSet 名称，获取未处理的 ResultMapping
         ResultMapping parentMapping = nextResultMaps.get(resultSets[resultSetCount]);
         if (parentMapping != null) {
+          // 获取 ResultMapping 对应的 ResultMap
           String nestedResultMapId = parentMapping.getNestedResultMapId();
           ResultMap resultMap = configuration.getResultMap(nestedResultMapId);
+          // 处理结果集 (与前面不同这里没有指定 multipleResults 但指定了 parentMapping)
           handleResultSet(rsw, resultMap, null, parentMapping);
         }
+        // 获取下一个结果集
         rsw = getNextResultSet(stmt);
+        // 清空 nestedResultObjects 集合
         cleanUpAfterHandlingResultSet();
+        // resultSetCount 递增
         resultSetCount++;
       }
     }
 
+    // 如果 multipleResults 只有一个返回第一个，否则直接返回
     return collapseSingleResultList(multipleResults);
   }
 
@@ -381,6 +396,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private void handleResultSet(ResultSetWrapper rsw, ResultMap resultMap, List<Object> multipleResults, ResultMapping parentMapping) throws SQLException {
     try {
       if (parentMapping != null) {
+        // 处理多结果集中的映射
         handleRowValues(rsw, resultMap, null, RowBounds.DEFAULT, parentMapping);
       } else {
         if (resultHandler == null) {
@@ -402,6 +418,12 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     }
   }
 
+  /**
+   * 判断是否是单一的结果集
+   *
+   * @param multipleResults
+   * @return
+   */
   @SuppressWarnings("unchecked")
   private List<Object> collapseSingleResultList(List<Object> multipleResults) {
     return multipleResults.size() == 1 ? (List<Object>) multipleResults.get(0) : multipleResults;
@@ -500,6 +522,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
    */
   private void storeObject(ResultHandler<?> resultHandler, DefaultResultContext<Object> resultContext, Object rowValue, ResultMapping parentMapping, ResultSet rs) throws SQLException {
     if (parentMapping != null) {
+      // 处理
       linkToParents(rs, parentMapping, rowValue);
     } else {
       // 普通映射, 将结果对象保存到 ResultHandler 中
@@ -776,10 +799,18 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private Object getPropertyMappingValue(ResultSet rs, MetaObject metaResultObject, ResultMapping propertyMapping, ResultLoaderMap lazyLoader, String columnPrefix)
       throws SQLException {
 
+    // 以下存在三种情况
+    // 1. 存在嵌套查询
+    // 2. 存在 resultSet 属性
+    // 3. 默认情况
+
     if (propertyMapping.getNestedQueryId() != null) {
       // 获取嵌套查询的属性值
       return getNestedQueryMappingValue(rs, metaResultObject, propertyMapping, lazyLoader, columnPrefix);
     } else if (propertyMapping.getResultSet() != null) {
+      // 1. 将 ResultMapping 与其对应的 resultSet 保存在 nextResultMaps 中
+      // 2. 将 ResultMapping 与其对应的 MetaObject 保存在 pendingRelations 中
+      // 3. 返回默认值
       addPendingChildRelation(rs, metaResultObject, propertyMapping);   // TODO is that OK?
       return DEFERRED;
     } else {
@@ -896,36 +927,73 @@ public class DefaultResultSetHandler implements ResultSetHandler {
 
   // MULTIPLE RESULT SETS
 
+  /**
+   *
+   * @param rs
+   * @param parentMapping
+   * @param rowValue
+   * @throws SQLException
+   */
   private void linkToParents(ResultSet rs, ResultMapping parentMapping, Object rowValue) throws SQLException {
+    // 创建多结果缓存 CacheKey
     CacheKey parentKey = createKeyForMultipleResults(rs, parentMapping, parentMapping.getColumn(), parentMapping.getForeignColumn());
+    // 获取多结果映射关系
     List<PendingRelation> parents = pendingRelations.get(parentKey);
     if (parents != null) {
+      // 遍历属性
       for (PendingRelation parent : parents) {
         if (parent != null && rowValue != null) {
+          // 将结果设置到外层对象中
           linkObjects(parent.metaObject, parent.propertyMapping, rowValue);
         }
       }
     }
   }
 
+  /**
+   * 记录待加载映射与父对象的关系
+   *
+   * @param rs
+   * @param metaResultObject  对象
+   * @param parentMapping     属性映射
+   * @throws SQLException
+   */
   private void addPendingChildRelation(ResultSet rs, MetaObject metaResultObject, ResultMapping parentMapping) throws SQLException {
+    // 创建多结果集缓存 CacheKey
     CacheKey cacheKey = createKeyForMultipleResults(rs, parentMapping, parentMapping.getColumn(), parentMapping.getColumn());
+
+    // 创建 PendingRelation 对象
     PendingRelation deferLoad = new PendingRelation();
     deferLoad.metaObject = metaResultObject;
     deferLoad.propertyMapping = parentMapping;
+
+    // 将 PendingRelation 对象添加到 pendingRelations 集合中
     List<PendingRelation> relations = MapUtil.computeIfAbsent(pendingRelations, cacheKey, k -> new ArrayList<>());
     // issue #255
     relations.add(deferLoad);
+
+    // 记录 ResultMapping 与其对应的结果集名称
     ResultMapping previous = nextResultMaps.get(parentMapping.getResultSet());
     if (previous == null) {
       nextResultMaps.put(parentMapping.getResultSet(), parentMapping);
     } else {
+      // 如果同名的结果集对应不同的 ResultMapping , 抛出异常
       if (!previous.equals(parentMapping)) {
         throw new ExecutorException("Two different properties are mapped to the same resultSet");
       }
     }
   }
 
+  /**
+   * 创建多结果缓存 CacheKey
+   *
+   * @param rs
+   * @param resultMapping
+   * @param names
+   * @param columns
+   * @return
+   * @throws SQLException
+   */
   private CacheKey createKeyForMultipleResults(ResultSet rs, ResultMapping resultMapping, String names, String columns) throws SQLException {
     CacheKey cacheKey = new CacheKey();
     cacheKey.update(resultMapping);
