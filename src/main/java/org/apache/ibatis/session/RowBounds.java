@@ -16,6 +16,8 @@
 package org.apache.ibatis.session;
 
 /**
+ * 行范围 (主要用来对ResultSet进行分页,但现在基本不用)
+ *
  * @author Clinton Begin
  */
 public class RowBounds {
@@ -24,7 +26,9 @@ public class RowBounds {
   public static final int NO_ROW_LIMIT = Integer.MAX_VALUE;
   public static final RowBounds DEFAULT = new RowBounds();
 
+  // 偏移量
   private final int offset;
+  // 限制数量
   private final int limit;
 
   public RowBounds() {
