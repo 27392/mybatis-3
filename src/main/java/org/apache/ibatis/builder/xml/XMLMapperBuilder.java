@@ -512,7 +512,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
     Discriminator discriminator = null;
 
-    // 记录映射集合
+    // 记录映射集合 (复制已经之前解析好的 ResultMapping)
     List<ResultMapping> resultMappings = new ArrayList<>(additionalResultMappings);
     // 获取所有的子节点
     List<XNode> resultChildren = resultMapNode.getChildren();
@@ -637,7 +637,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     for (XNode caseChild : context.getChildren()) {
       // 获取 value 属性
       String value = caseChild.getStringAttribute("value");
-      // 创建 ResultMap 对象
+      // 创建 ResultMap 对象(递归)
       String resultMap = caseChild.getStringAttribute("resultMap", processNestedResultMappings(caseChild, resultMappings, resultType));
       // value , resultMap.id
       discriminatorMap.put(value, resultMap);
