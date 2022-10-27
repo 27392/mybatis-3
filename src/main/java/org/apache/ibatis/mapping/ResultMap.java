@@ -68,7 +68,7 @@ public class ResultMap {
   private boolean hasNestedResultMaps;
   // 是否存在嵌套查询, 如果某个映射关系存在 select 属性, 则为 true
   private boolean hasNestedQueries;
-  // 是否开启自动映射
+  // 是否开启自动映射，对应 autoMapping 属性
   private Boolean autoMapping;
 
   private ResultMap() {

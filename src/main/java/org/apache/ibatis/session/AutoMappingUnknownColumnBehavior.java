@@ -28,6 +28,7 @@ import org.apache.ibatis.mapping.MappedStatement;
 public enum AutoMappingUnknownColumnBehavior {
 
   /**
+   * 不做任何反应
    * Do nothing (Default).
    */
   NONE {
@@ -38,6 +39,7 @@ public enum AutoMappingUnknownColumnBehavior {
   },
 
   /**
+   * 输出警告日志（'org.apache.ibatis.session.AutoMappingUnknownColumnBehavior' 的日志等级必须设置为 WARN）
    * Output warning log.
    * Note: The log level of {@code 'org.apache.ibatis.session.AutoMappingUnknownColumnBehavior'} must be set to {@code WARN}.
    */
@@ -49,6 +51,7 @@ public enum AutoMappingUnknownColumnBehavior {
   },
 
   /**
+   * 映射失败 (抛出 SqlSessionException)
    * Fail mapping.
    * Note: throw {@link SqlSessionException}.
    */

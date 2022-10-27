@@ -142,7 +142,10 @@ public class Configuration {
   protected Integer defaultFetchSize;
   protected ResultSetType defaultResultSetType;
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+
+  // 自动映射行为。默认是 `PARTIAL` (只会自动映射没有定义嵌套结果映射的字段)
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
+  // 自动映射未知列行为。默认是 `NONE` (不做任何反应)
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
   // 环境变量
@@ -483,15 +486,26 @@ public class Configuration {
     this.environment = environment;
   }
 
+  /**
+   * 获取自动映射行为
+   *
+   * @return
+   */
   public AutoMappingBehavior getAutoMappingBehavior() {
     return autoMappingBehavior;
   }
 
+  /**
+   * 设置自动映射行为
+   *
+   * @param autoMappingBehavior
+   */
   public void setAutoMappingBehavior(AutoMappingBehavior autoMappingBehavior) {
     this.autoMappingBehavior = autoMappingBehavior;
   }
 
   /**
+   * 获取自动映射未知列行为
    * Gets the auto mapping unknown column behavior.
    *
    * @return the auto mapping unknown column behavior
@@ -502,6 +516,7 @@ public class Configuration {
   }
 
   /**
+   * 设置自动映射未知列行为
    * Sets the auto mapping unknown column behavior.
    *
    * @param autoMappingUnknownColumnBehavior
