@@ -101,6 +101,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private final Map<CacheKey, Object> nestedResultObjects = new HashMap<>();
   // 处理嵌套查询循环引用(key 是 resultMap.id)
   private final Map<String, Object> ancestorObjects = new HashMap<>();
+  // 记录上一行结果
   private Object previousRowValue;
 
   // multiple resultsets
@@ -1587,6 +1588,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     // 1. 定位到指定行数 (有 RowBounds 的时候才会起作用)
     skipRows(resultSet, rowBounds);
 
+    // 结果对象（默认是上一行的结果对象）
     Object rowValue = previousRowValue;
 
     // 2. 检测已处理的行数是否超过 BowBounds.limit 以及 ResultSet 中是否还有可处理的参数
@@ -1597,16 +1599,21 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       final CacheKey rowKey = createRowKey(discriminatedResultMap, rsw, null);
       // 5. 根据 CacheKey 获取对象
       Object partialObject = nestedResultObjects.get(rowKey);
+
       // issue #577 && #542
-      // 6. 检测 <select> 节点中的 resultOrdered 属性
+      // 6. 检测 <select> 节点中的 resultOrdered 属性 (先保存上一次的结果对象，在获取创建的结果对象)
       if (mappedStatement.isResultOrdered()) {
+        // 如果对象为空并且存在上一行记录（表示是处理新的一行记录）
         if (partialObject == null && rowValue != null) {
+          // 清空 nestedResultObjects 集合
           nestedResultObjects.clear();
+          // 保存上一行记录的结果对象
           storeObject(resultHandler, resultContext, rowValue, parentMapping, resultSet);
         }
+        // 得到映射结果对象(处理完成后会将对象保存到 nestedResultObjects 属性中. key 是 rowKey)
         rowValue = getRowValue(rsw, discriminatedResultMap, rowKey, null, partialObject);
       } else {
-        // 7. 得到映射结果对象(处理完成后会将对象保存到 nestedResultObjects 属性中. key 是 rowKey)
+        // 7. 得到映射结果对象(处理完成后会将对象保存到 nestedResultObjects 属性中. key 是 rowKey) （先创建自身的结果对象，在保存自身的结果对象）
         rowValue = getRowValue(rsw, discriminatedResultMap, rowKey, null, partialObject);
         if (partialObject == null) {
           // 8. 保存结果集对象(只有首次才会保存)
@@ -1616,9 +1623,12 @@ public class DefaultResultSetHandler implements ResultSetHandler {
     }
     // 对 resultOrdered 属性为 true 时的特殊处理
     if (rowValue != null && mappedStatement.isResultOrdered() && shouldProcessMoreRows(resultContext, rowBounds)) {
+      // 保存上一行记录的结果对象
       storeObject(resultHandler, resultContext, rowValue, parentMapping, resultSet);
+      // previousRowValue 置为空
       previousRowValue = null;
     } else if (rowValue != null) {
+      // 将本次结果赋值给 previousRowValue
       previousRowValue = rowValue;
     }
   }
@@ -1661,7 +1671,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
             Object ancestorObject = ancestorObjects.get(nestedResultMapId);
             if (ancestorObject != null) {
               if (newObject) {
-                // 从 ancestorObjects 中获取对象放入外层对象中
+                // 从 ancestorObjects 中获取对象放入外层对象中（重用对象，不用创建）
                 linkObjects(metaObject, resultMapping, ancestorObject); // issue #385
               }
               continue;
@@ -1669,7 +1679,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
           }
           // 4. 为嵌套对象创建 CacheKey
           final CacheKey rowKey = createRowKey(nestedResultMap, rsw, columnPrefix);
-          // 将嵌套对象的 CacheKey 与外层对象的 CacheKey 拼接 (nestedResultObjects 在映射完一个结果集后才会清空, 为了保证后续的结果集不受影响)
+          // 将嵌套对象的 CacheKey 与外层对象的 CacheKey 拼接组成唯一的 CacheKey
           final CacheKey combinedKey = combineKeys(rowKey, parentRowKey);
           // 查找 nestedResultObjects 集合中是否存在相同的对象
           Object rowValue = nestedResultObjects.get(combinedKey);
