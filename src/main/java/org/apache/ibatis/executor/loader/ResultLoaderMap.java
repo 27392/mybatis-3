@@ -161,7 +161,7 @@ public class ResultLoaderMap {
   }
 
   /**
-   * LoadPair 保存了主对象的信息与对应属性的 ResultLoader
+   * LoadPair 保存了主对象的信息与延迟对应属性的 ResultLoader
    *
    * Property which was not loaded yet.
    */
@@ -257,7 +257,6 @@ public class ResultLoaderMap {
      * @throws SQLException
      */
     public void load(final Object userObject) throws SQLException {
-      //
       if (this.metaResultObject == null || this.resultLoader == null) {
         if (this.mappedParameter == null) {
           throw new ExecutorException("Property [" + this.property + "] cannot be loaded because "

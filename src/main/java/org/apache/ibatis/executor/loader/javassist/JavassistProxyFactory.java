@@ -147,6 +147,7 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
 
       // 目标类class
       final Class<?> type = target.getClass();
+
       // 创建 MethodHandler 对象
       EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
 
