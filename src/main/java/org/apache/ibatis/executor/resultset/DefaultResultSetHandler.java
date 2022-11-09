@@ -1297,6 +1297,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
 
   /**
    * 获取嵌套查询构造函数的值
+   * （无论配置如何，都不会延迟加载而是直接加载）
    *
    * @param rs
    * @param constructorMapping
@@ -1368,6 +1369,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       // 检查缓存中是否存在该嵌套查询的结果集
       if (executor.isCached(nestedQuery, key)) {
         executor.deferLoad(nestedQuery, metaResultObject, property, key, targetType);
+        // 返回默认的 object 对象
         value = DEFERRED;
       } else {
         // 创建 ResultLoader 对象
