@@ -124,7 +124,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   private static class PendingRelation {
     // 结果对象对应的 MetaObject
     public MetaObject metaObject;
-    // 使用了 resultSets 的 ResultMapping
+    // 使用了 resultSet 属性 的 ResultMapping
     public ResultMapping propertyMapping;
   }
 
@@ -944,7 +944,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
    * @throws SQLException
    */
   private void linkToParents(ResultSet rs, ResultMapping parentMapping, Object rowValue) throws SQLException {
-    // 创建多结果缓存 CacheKey
+    // 创建多结果缓存 CacheKey（与 addPendingChildRelation 方法中的 CacheKey 是一致的）
     CacheKey parentKey = createKeyForMultipleResults(rs, parentMapping, parentMapping.getColumn(), parentMapping.getForeignColumn());
     // 获取多结果映射关系
     List<PendingRelation> parents = pendingRelations.get(parentKey);
@@ -995,6 +995,11 @@ public class DefaultResultSetHandler implements ResultSetHandler {
 
   /**
    * 创建多结果缓存 CacheKey
+   *
+   * CacheKey 由三个部分组成
+   *  1. ResultMapping
+   *  2. ResultMapping.column
+   *  3. ResultMapping.column 对应的列值
    *
    * @param rs
    * @param resultMapping
