@@ -125,6 +125,7 @@ public class SelectKeyGenerator implements KeyGenerator {
   }
 
   /**
+   * 处理多属性
    *
    * @param keyProperties 属性
    * @param metaParam     用户参数
