@@ -41,13 +41,13 @@ public final class MappedStatement {
   private Configuration configuration;
   // id 属性
   private String id;
-  // fetchSize 属性
+  // fetchSize 属性 （这是一个给驱动的建议值，尝试让驱动程序每次批量返回的结果行数等于这个设置值。 默认值为未设置（unset）（依赖驱动））
   private Integer fetchSize;
-  // timeout 属性
+  // timeout 属性 （这个设置是在抛出异常之前，驱动程序等待数据库返回请求结果的秒数。默认值为未设置（unset）（依赖数据库驱动））
   private Integer timeout;
-  // JDBC Statement 类型
+  // JDBC Statement 类型 （可选 STATEMENT，PREPARED 或 CALLABLE。这会让 MyBatis 分别使用 Statement，PreparedStatement 或 CallableStatement，默认值：PREPARED）
   private StatementType statementType;
-  // resultSetType 属性
+  // resultSetType 属性 （FORWARD_ONLY，SCROLL_SENSITIVE, SCROLL_INSENSITIVE 或 DEFAULT（等价于 unset） 中的一个，默认值为 unset （依赖数据库驱动））
   private ResultSetType resultSetType;
   // SqlSource 对象(使用它可以创建 BoundSql)
   private SqlSource sqlSource;
@@ -61,7 +61,7 @@ public final class MappedStatement {
   private boolean flushCacheRequired;
   // useCache 属性. 是否使用二级缓存
   private boolean useCache;
-  // resultOrdered 属性
+  // resultOrdered 属性 （这个设置仅针对嵌套结果 select 语句：如果为 true，则假设结果集以正确顺序（排序后）执行映射，当返回新的主结果行时，将不再发生对以前结果行的引用。 这样可以减少内存消耗。默认值：false。）
   private boolean resultOrdered;
   // SQL 语句类型
   private SqlCommandType sqlCommandType;
@@ -79,7 +79,7 @@ public final class MappedStatement {
   private Log statementLog;
   // 语言驱动
   private LanguageDriver lang;
-  // resultSets 属性按照逗号拆分后的结果
+  // resultSets 属性 （这个设置仅适用于多结果集的情况。它将列出语句执行后返回的结果集并赋予每个结果集一个名称，多个名称之间以逗号分隔。）
   private String[] resultSets;
 
   MappedStatement() {

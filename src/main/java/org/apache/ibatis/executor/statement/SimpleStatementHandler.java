@@ -33,6 +33,11 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * Statement 处理器
+ *
+ * 对应{@link Statement}类型
+ *
+ * @see org.apache.ibatis.mapping.StatementType#STATEMENT
  * @author Clinton Begin
  */
 public class SimpleStatementHandler extends BaseStatementHandler {
@@ -43,17 +48,24 @@ public class SimpleStatementHandler extends BaseStatementHandler {
 
   @Override
   public int update(Statement statement) throws SQLException {
+    // 获取sql
     String sql = boundSql.getSql();
+    // 获取用户参数
     Object parameterObject = boundSql.getParameterObject();
+    // 获取 KeyGenerator 对象
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
+
+    // 执行 SQL, 然后执行 keyGenerator.processAfter 方法
     int rows;
     if (keyGenerator instanceof Jdbc3KeyGenerator) {
       statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
       rows = statement.getUpdateCount();
+      // 将数据库生成的主键设置到用户对象(parameterObject)中
       keyGenerator.processAfter(executor, mappedStatement, statement, parameterObject);
     } else if (keyGenerator instanceof SelectKeyGenerator) {
       statement.execute(sql);
       rows = statement.getUpdateCount();
+      // 执行 <selectKey> 节点中配置的SQL语句获取数据,并设置到用户对象(parameterObject)中
       keyGenerator.processAfter(executor, mappedStatement, statement, parameterObject);
     } else {
       statement.execute(sql);
@@ -94,6 +106,7 @@ public class SimpleStatementHandler extends BaseStatementHandler {
   @Override
   public void parameterize(Statement statement) {
     // N/A
+    // 空实现
   }
 
 }
