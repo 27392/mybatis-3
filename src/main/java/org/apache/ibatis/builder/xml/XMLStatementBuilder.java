@@ -121,7 +121,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     String lang = context.getStringAttribute("lang");
     LanguageDriver langDriver = getLanguageDriver(lang);
 
-    // 解析 <selectKey>
+    // 解析 <selectKey>; 解析后的 KeyGenerator 对象会被添加到 Configuration.keyGenerators 中
     // Parse selectKey after includes and remove them.
     processSelectKeyNodes(id, parameterTypeClass, langDriver);
 
@@ -130,10 +130,12 @@ public class XMLStatementBuilder extends BaseBuilder {
     KeyGenerator keyGenerator;
     String keyStatementId = id + SelectKeyGenerator.SELECT_KEY_SUFFIX;
     keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId, true);
+
+    // 存在则表示存在 <selectKey>, 且类型为 SelectKeyGenerator
     if (configuration.hasKeyGenerator(keyStatementId)) {
       keyGenerator = configuration.getKeyGenerator(keyStatementId);
     } else {
-      // 获取 useGeneratedKeys 属性绝对是否使用 Jdbc3KeyGenerator 还是 NoKeyGenerator
+      // 获取 useGeneratedKeys 属性决定是否使用 Jdbc3KeyGenerator 还是 NoKeyGenerator
       keyGenerator = context.getBooleanAttribute("useGeneratedKeys",
           configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType))
           ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
@@ -222,6 +224,7 @@ public class XMLStatementBuilder extends BaseBuilder {
   /**
    * 解析 <selectKey> 节点
    *
+   * 最后将解析后的 KeyGenerator 对象添加到 Configuration.keyGenerators 中
    *
    * <insert id="insertAuthor">
    *   <selectKey keyProperty="id" resultType="int" order="BEFORE">
