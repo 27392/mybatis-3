@@ -249,7 +249,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     String keyProperty = nodeToHandle.getStringAttribute("keyProperty");
     String keyColumn = nodeToHandle.getStringAttribute("keyColumn");
 
-    // 获取 order 属性. 判断是否在插入之前执行
+    // 获取 order 属性. 判断是否在插入之前执行(默认在之后执行)
     boolean executeBefore = "BEFORE".equals(nodeToHandle.getStringAttribute("order", "AFTER"));
 
     // 以下是默认的一些配置
