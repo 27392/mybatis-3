@@ -26,11 +26,15 @@ import org.apache.ibatis.executor.ExecutorException;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.StatementType;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
- * 一个
+ * RoutingStatementHandler (实现 StatementHandler 接口)
+ *
+ * 1. 负责根据 {@link StatementType} 生成对应的 StatementHandler
+ * 2. 代理 StatementHandler 的功能
  *
  * @author Clinton Begin
  */
