@@ -57,6 +57,9 @@ public class ParamNameResolver {
    */
   private final SortedMap<Integer, String> names;
 
+  /**
+   * 是否存在{@link Param}注释
+   */
   private boolean hasParamAnnotation;
 
   /**
@@ -169,7 +172,7 @@ public class ParamNameResolver {
       // 包装参数
       return wrapToMapIfCollection(value, useActualParamName ? names.get(0) : null);
     } else {
-      // 有 @Param 且有多个参数
+      // 有多个参数的情况
       final Map<String, Object> param = new ParamMap<>();
       int i = 0;
       for (Map.Entry<Integer, String> entry : names.entrySet()) {
