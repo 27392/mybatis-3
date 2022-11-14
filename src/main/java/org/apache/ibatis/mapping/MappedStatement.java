@@ -57,7 +57,7 @@ public final class MappedStatement {
   private ParameterMap parameterMap;
   // resultMap 属性对应的 ResultMap 对象
   private List<ResultMap> resultMaps;
-  // flushCache 属性. 是否需要清空一二级缓存
+  // flushCache 属性. (将其设置为 true 后，只要语句被调用，都会导致本地缓存和二级缓存被清空，默认值：（对 insert、update 和 delete 语句）true。)
   private boolean flushCacheRequired;
   // useCache 属性. 是否使用二级缓存
   private boolean useCache;
