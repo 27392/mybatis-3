@@ -59,7 +59,7 @@ public interface StatementHandler {
       throws SQLException;
 
   /**
-   * 批量执行 SQL 语句
+   * 处理批处理
    *
    * @param statement
    * @throws SQLException
@@ -69,6 +69,7 @@ public interface StatementHandler {
 
   /**
    * 执行 update/insert/delete 语句
+   *
    * @param statement
    * @return
    * @throws SQLException

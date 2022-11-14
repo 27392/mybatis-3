@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 简单的执行器
+ *
  * @author Clinton Begin
  */
 public class SimpleExecutor extends BaseExecutor {
@@ -44,11 +46,16 @@ public class SimpleExecutor extends BaseExecutor {
   public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Statement stmt = null;
     try {
+      // 获取配置对象
       Configuration configuration = ms.getConfiguration();
+      // 创建 StatementHandler 对象
       StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
+      // 创建 Statement 并绑定SQL参数 (调用 StatementHandler.prepare() 与 StatementHandler.parameterize() 方法)
       stmt = prepareStatement(handler, ms.getStatementLog());
+      // 执行 SQL (调用 StatementHandler.update() 方法)
       return handler.update(stmt);
     } finally {
+      // 关闭 Statement
       closeStatement(stmt);
     }
   }
@@ -57,17 +64,16 @@ public class SimpleExecutor extends BaseExecutor {
   public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Statement stmt = null;
     try {
+      // 获取配置对象
       Configuration configuration = ms.getConfiguration();
-
       // 创建 StatementHandler(Statement处理器)
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
-
-      // 创建Statement对象并设置参数
+      // 创建 Statement 并绑定SQL参数 (调用 StatementHandler.prepare() 与 StatementHandler.parameterize() 方法)
       stmt = prepareStatement(handler, ms.getStatementLog());
-
-      // 查询
+      // 执行 SQL (调用 StatementHandler.update() 方法, 并通过 ResultSetHandler 完成结果集的映射)
       return handler.query(stmt, resultHandler);
     } finally {
+      // 关闭 Statement
       closeStatement(stmt);
     }
   }
@@ -88,7 +94,7 @@ public class SimpleExecutor extends BaseExecutor {
   }
 
   /**
-   * 创建Statement对象并设置参数
+   * 创建 Statement 对象并绑定SQL参数
    *
    * @param handler
    * @param statementLog
@@ -97,13 +103,14 @@ public class SimpleExecutor extends BaseExecutor {
    */
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
-    // 获取连接
+
+    // 获取数据库连接
     Connection connection = getConnection(statementLog);
 
-    // 创建Statement对象
+    // 创建 Statement 对象
     stmt = handler.prepare(connection, transaction.getTimeout());
 
-    // 设置参数
+    // 绑定SQL参数
     handler.parameterize(stmt);
     return stmt;
   }

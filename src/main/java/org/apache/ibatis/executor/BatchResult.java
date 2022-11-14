@@ -21,14 +21,21 @@ import java.util.List;
 import org.apache.ibatis.mapping.MappedStatement;
 
 /**
+ * 批处理结果 (记录了批处理的参数、sql 信息、结果信息)
+ *
+ * @see BaseExecutor
  * @author Jeff Butler
  */
 public class BatchResult {
 
+  // MappedStatement 对象
   private final MappedStatement mappedStatement;
+  // sql 语句
   private final String sql;
+  // 参数集合
   private final List<Object> parameterObjects;
 
+  // 映射行数
   private int[] updateCounts;
 
   public BatchResult(MappedStatement mappedStatement, String sql) {
